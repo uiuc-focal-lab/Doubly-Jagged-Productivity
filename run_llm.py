@@ -228,7 +228,7 @@ def main():
          ("llama", "meta-llama/Meta-Llama-3-8B-Instruct"),
          ("mistral", "mistralai/Mistral-7B-Instruct-v0.3"),
          #("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
-         ("gemini", "gemini-2.5-flash"),
+         ("gemini", "gemini-3-pro-preview"),
     ]
 
     for model_name, model_path in models:
