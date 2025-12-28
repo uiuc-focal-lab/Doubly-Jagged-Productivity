@@ -1,19 +1,21 @@
 from botocore.exceptions import ClientError
 import json
 import time
+import boto3
 
 def call_claude_bedrock(prompt: str, model_id: str, max_tokens: int = 2048,
-                       temperature: float = 0.1, top_p: float = 0.95,
+                       temperature: float = 0.1,
                        max_retries: int = 8) -> str:
     """
     Calls Claude on Bedrock using the Anthropic Messages API format.
     model_id can be the inference profile ID (e.g. us.anthropic...) or its ARN.
     """
+    client = boto3.client("bedrock-runtime", region_name="us-east-1")
+    claude_opus = "us.anthropic.claude-opus-4-5-20251101-v1:0"
     body = {
         "anthropic_version": "bedrock-2023-05-31",
         "max_tokens": max_tokens,
         "temperature": temperature,
-        "top_p": top_p,
         "messages": [
             {
                 "role": "user",

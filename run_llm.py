@@ -114,7 +114,6 @@ def evaluate_with_model(model_name, model_path, df):
                 model_id=model_path,         
                 max_tokens=2048,
                 temperature=0.1,
-                top_p=0.95,
             )
             match = re.search(r"\[.*?\]", generated_text, flags=re.DOTALL)
             if match:
