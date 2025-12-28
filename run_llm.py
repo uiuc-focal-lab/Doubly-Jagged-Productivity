@@ -1,6 +1,4 @@
 import pandas as pd
-import json
-import boto3
 import re
 import gc
 import os
@@ -12,6 +10,7 @@ import requests
 from tqdm import tqdm
 from dotenv import load_dotenv
 from vllm import LLM, SamplingParams
+from call_calude import call_claude_bedrock
 
 # ----------------------------- SETUP -----------------------------
 def set_seed(seed: int = 28):
@@ -33,7 +32,7 @@ claude_opus = "us.anthropic.claude-opus-4-5-20251101-v1:0"
 # ----------------------------- PROMPT -----------------------------
 def build_prompt(row, model_name):
     examples = {
-        "openchat": [
+        "claude": [
             "Profession: Mathematicians\nTask: Conduct research to extend mathematical knowledge in traditional areas, such as algebra, geometry, probability, and logic.\nExample Evaluation: [0, \"No Risks\", \"LLMs can significantly accelerate mathematical research by suggesting lemmas, creating informal plans for the proofs, or fetching background knowledge. The task is not safety critical and therefore there is no risk\"]",
             "Profession: Pharmacists\nTask: Provide information and advice regarding drug interactions, side effects, dosage, and proper medication storage.\nExample Evaluation: [5, \"Hallucination and Misinformation, Adversarial risks, Privacy, Robustness\", \"The knowledge extraction capabilities of LLMs makes them suitable for performing this task, and their usage can substantially reduce the completion time. However, they can provide misleading guidelines, are not robust when the same question is asked in different phrasings, and malicious actors can exploit them to extract sensitive information. These vulnerabilities can cause widespread harm\"]",
             "Profession: Software Quality Assurance Analysts and Testers\nTask: Perform initial debugging procedures by reviewing configuration files, logs, or code pieces to determine breakdown source.\nExample Evaluation: [1, \"Robustness\", \"LLM-based code agents can significantly reduce the completion time by assisting in reviews and determining sources. Lack of robustness can sometimes cause critical issues in software to persist. However, the same is true for humans, so therefore the use of LLMs does not significantly increase risks\"]", 
@@ -74,57 +73,82 @@ For each evaluation:
 - Provide a detailed justification in the format: [rating, "risks", "justification"].
 """
 
-    shot_key = "llama" if "llama" in model_name else ("mistral" if "mistral" in model_name else "openchat")
+    shot_key = "llama" if "llama" in model_name else ("mistral" if "mistral" in model_name else "claude")
     examples_text = "\n\n".join(examples[shot_key])
     task = f"Given the profession: {row['Title']}, and a specific task: '{row['Task']}', evaluate the risk of using an LLM system to perform the task."
     return f"{prefix}\n\n{examples_text}\n\n{task}"
 
 # ----------------------------- INFERENCE + CHECKPOINT -----------------------------
+def is_bedrock_model(model_path: str) -> bool:
+    if not model_path:
+        return False
+    return model_path.startswith("us.") or model_path.startswith("arn:aws:bedrock:")
+
 def evaluate_with_model(model_name, model_path, df):
     checkpoint_path = f"{model_name}_partial.csv"
-    if os.path.exists(checkpoint_path):
-        print(f"🔁 Resuming from checkpoint: {checkpoint_path}")
-        df_partial = pd.read_csv(checkpoint_path)
-        df = df.merge(df_partial[["Task ID", f"{model_name}_ratings", f"{model_name}_risks", f"{model_name}_motivation"]],
-                      on="Task ID", how="left", suffixes=("", "_ckpt"))
-    else:
-        df[f"{model_name}_ratings"] = None
-        df[f"{model_name}_risks"] = None
-        df[f"{model_name}_motivation"] = None
-
     to_process = df[df[f"{model_name}_ratings"].isna()].copy()
     if to_process.empty:
         print(f"✅ All rows already evaluated for {model_name}")
         return df
 
-    print(f"🔍 Loading model: {model_name}")
-    llm = LLM(model=model_path, dtype="half", trust_remote_code=True)
-    sampling_params = SamplingParams(temperature=0.1, top_p=0.95, max_tokens=2048)
-
     prompts = [build_prompt(row, model_name) for _, row in to_process.iterrows()]
-    outputs = llm.generate(prompts, sampling_params)
 
     ratings, risks, justifications = [], [], []
-    for output in tqdm(outputs, desc=f"Inference: {model_name}"):
-        generated_text = output.outputs[0].text
-        print("Generated text ", generated_text)
-        match = re.search(r"\[.*?\]", generated_text)
-        print("Match ", match)
-        if match:
-            try:
-                parsed = eval(match.group(0))
-                ratings.append(int(parsed[0]))
-                risks.append(str(parsed[1]))
-                justifications.append(str(parsed[2]))
-            except:
+
+    if is_bedrock_model(model_path):
+        print(f"Using Bedrock model: {model_name} ({model_path})")
+        for prompt in tqdm(prompts, desc=f"Inference (Bedrock): {model_name}"):
+            generated_text = call_claude_bedrock(
+                prompt=prompt,
+                model_id=model_path,         
+                max_tokens=2048,
+                temperature=0.1,
+                top_p=0.95,
+            )
+            match = re.search(r"\[.*?\]", generated_text, flags=re.DOTALL)
+            if match:
+                try:
+                    parsed = eval(match.group(0))
+                    ratings.append(int(parsed[0]))
+                    risks.append(str(parsed[1]))
+                    justifications.append(str(parsed[2]))
+                except:
+                    ratings.append(None)
+                    risks.append(None)
+                    justifications.append(generated_text.strip())
+            else:
                 ratings.append(None)
                 risks.append(None)
                 justifications.append(generated_text.strip())
-        else:
-            ratings.append(None)
-            risks.append(None)
-            justifications.append(generated_text.strip())
-    print("rating length ", len(ratings))
+
+    else:
+        print(f"Loading model: {model_name}")
+        llm = LLM(model=model_path, dtype="half", trust_remote_code=True)
+        sampling_params = SamplingParams(temperature=0.1, top_p=0.95, max_tokens=2048)
+        outputs = llm.generate(prompts, sampling_params)
+
+        for output in tqdm(outputs, desc=f"Inference: {model_name}"):
+            generated_text = output.outputs[0].text
+            match = re.search(r"\[.*?\]", generated_text, flags=re.DOTALL)
+            if match:
+                try:
+                    parsed = eval(match.group(0))
+                    ratings.append(int(parsed[0]))
+                    risks.append(str(parsed[1]))
+                    justifications.append(str(parsed[2]))
+                except:
+                    ratings.append(None)
+                    risks.append(None)
+                    justifications.append(generated_text.strip())
+            else:
+                ratings.append(None)
+                risks.append(None)
+                justifications.append(generated_text.strip())
+
+        del llm
+        torch.cuda.empty_cache()
+        gc.collect()
+
     to_process[f"{model_name}_ratings"] = ratings
     to_process[f"{model_name}_risks"] = risks
     to_process[f"{model_name}_motivation"] = justifications
@@ -132,11 +156,8 @@ def evaluate_with_model(model_name, model_path, df):
 
     df.to_csv(checkpoint_path, index=False, encoding="utf-8")
     print(f"💾 Partial results saved to {checkpoint_path}")
-
-    del llm
-    torch.cuda.empty_cache()
-    gc.collect()
     return df
+
 
 # ----------------------------- AGGREGATION -----------------------------
 def mode(row, colnames):
@@ -193,6 +214,7 @@ def main():
     models = [
          ("llama", "meta-llama/Meta-Llama-3-8B-Instruct"),
          ("mistral", "mistralai/Mistral-7B-Instruct-v0.3"),
+         ("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
     ]
 
     for model_name, model_path in models:
