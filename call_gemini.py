@@ -4,6 +4,10 @@ def call_gemini(prompt: str, model: str, max_output_tokens: int = 2048,
                temperature: float = 0.1, top_p: float = 0.95,
                timeout_s: int = 120, max_retries: int = 8) -> str:
     """Gemini Developer API via REST generateContent."""
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    if not API_KEY:
+        raise ValueError("API_KEY not found in .env file")
+                 
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY not set (add it to your .env)")
 
