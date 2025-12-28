@@ -10,7 +10,7 @@ import requests
 from tqdm import tqdm
 from dotenv import load_dotenv
 from vllm import LLM, SamplingParams
-from call_calude import call_claude_bedrock
+from call_claude import call_claude_bedrock
 
 # ----------------------------- SETUP -----------------------------
 def set_seed(seed: int = 28):
@@ -26,8 +26,8 @@ API_KEY = os.getenv("API_KEY")
 if not API_KEY:
     raise ValueError("API_KEY not found in .env file")
     
-client = boto3.client("bedrock-runtime", region_name="us-east-1")
-claude_opus = "us.anthropic.claude-opus-4-5-20251101-v1:0"
+#client = boto3.client("bedrock-runtime", region_name="us-east-1")
+#claude_opus = "us.anthropic.claude-opus-4-5-20251101-v1:0"
 
 # ----------------------------- PROMPT -----------------------------
 def build_prompt(row, model_name):
@@ -82,6 +82,7 @@ For each evaluation:
 def is_bedrock_model(model_path: str) -> bool:
     if not model_path:
         return False
+    print("COMING HERE")
     return model_path.startswith("us.") or model_path.startswith("arn:aws:bedrock:")
 
 def evaluate_with_model(model_name, model_path, df):
