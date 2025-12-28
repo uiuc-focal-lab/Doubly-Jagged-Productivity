@@ -184,7 +184,7 @@ def generate_summary(row):
 # ----------------------------- MAIN -----------------------------
 def main():
     set_seed(28)
-    df = pd.read_excel("Task_Statements_Computer_Occupations.xlsx", engine="openpyxl",sheet_name="Computer Occupations")
+    df = pd.read_excel("Task_Statements_Computer_Occupations.xlsx", engine="openpyxl",sheet_name="Test")
     df.columns = df.columns.str.rstrip()
     print("column ", df.columns) 
     if "Task ID" not in df.columns:
@@ -197,7 +197,7 @@ def main():
 
     for model_name, model_path in models:
         df = evaluate_with_model(model_name, model_path, df)
-
+    
     rating_cols = [f"{name}_ratings" for name, _ in models]
     df["TEAI_rating"] = df.apply(lambda row: mode(row, rating_cols), axis=1)
 
