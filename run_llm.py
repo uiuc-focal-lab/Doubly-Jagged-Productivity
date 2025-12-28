@@ -1,4 +1,6 @@
 import pandas as pd
+import json
+import boto3
 import re
 import gc
 import os
@@ -24,6 +26,9 @@ load_dotenv()
 API_KEY = os.getenv("API_KEY")
 if not API_KEY:
     raise ValueError("API_KEY not found in .env file")
+    
+client = boto3.client("bedrock-runtime", region_name="us-east-1")
+claude_opus = "us.anthropic.claude-opus-4-5-20251101-v1:0"
 
 # ----------------------------- PROMPT -----------------------------
 def build_prompt(row, model_name):
@@ -188,7 +193,6 @@ def main():
     models = [
          ("llama", "meta-llama/Meta-Llama-3-8B-Instruct"),
          ("mistral", "mistralai/Mistral-7B-Instruct-v0.3"),
-         ("openchat", "openchat/openchat-3.5-0106"),
     ]
 
     for model_name, model_path in models:
