@@ -51,7 +51,7 @@ def build_prompt(row, model_name):
             "Profession: Models\nTask: Pose for artists and photographers.\nExample Evaluation: [0, \"No Risks\", \"LLMs can suggest poses and make up suggestions. However, the performance on the core task depends on the abilities of the Model, therefore the impact of LLMs on the completion time of this task will not be significant. \"]",
             "Profession: Claims Adjusters, Examiners, and Investigators\nTask: Review police reports, medical treatment records, medical bills, or physical property damage to determine the extent of liability.\nExample Evaluation: [5, \"Privacy, Adversarial risks\", \"LLM-based agents can significantly reduce the task completion time. However, the task requires processing highly sensitive personal information. The LLM may uninitentially or under Jailbreaks/prompt injection leak private information leading to individual, organizational, and societal harm\"]",
         ],
-        "mistral": [
+        "gpt5": [
             "Profession: Mathematicians\nTask: Conduct research to extend mathematical knowledge in traditional areas, such as algebra, geometry, probability, and logic.\nExample Evaluation: [0, \"No Risks\", \"LLMs can significantly accelerate mathematical research by suggesting lemmas, creating informal plans for the proofs, or fetching background knowledge. The task is not safety critical and therefore there is no risk\"]",
             "Profession: Pharmacists\nTask: Provide information and advice regarding drug interactions, side effects, dosage, and proper medication storage.\nExample Evaluation: [5, \"Hallucination and Misinformation, Adversarial risks, Privacy, Robustness\", \"The knowledge extraction capabilities of LLMs makes them suitable for performing this task, and their usage can substantially reduce the completion time. However, they can provide misleading guidelines, are not robust when the same question is asked in different phrasings, and malicious actors can exploit them to extract sensitive information. These vulnerabilities can cause widespread harm\"]",
             "Profession: Software Quality Assurance Analysts and Testers\nTask: Perform initial debugging procedures by reviewing configuration files, logs, or code pieces to determine breakdown source.\nExample Evaluation: [1, \"Robustness\", \"LLM-based code agents can significantly reduce the completion time by assisting in reviews and determining sources. Lack of robustness can sometimes cause critical issues in software to persist. However, the same is true for humans, so therefore the use of LLMs does not significantly increase risks\"]", 
@@ -84,7 +84,7 @@ For each evaluation:
 - Provide a detailed justification in the format: [rating, "risks", "justification"].
 """
 
-    shot_key = "gemini" if "gemini" in model_name else ("mistral" if "mistral" in model_name else "claude")
+    shot_key = "gpt5" if "gpt5" in model_name else ("mistral" if "mistral" in model_name else "claude")
     examples_text = "\n\n".join(examples[shot_key])
     task = f"Given the profession: {row['Title']}, and a specific task: '{row['Task']}', evaluate the risk of using an LLM system to perform the task."
     return f"{prefix}\n\n{examples_text}\n\n{task}"
@@ -98,6 +98,9 @@ def is_bedrock_model(model_path: str) -> bool:
 
 def is_gemini_model(model_path: str) -> bool:
     return bool(model_path) and (model_path.startswith("gemini-") or model_path.startswith("models/gemini-"))
+
+def is_openai_model(model_path: str) -> bool:
+    return bool(model_path) and model_path.startswith("openai:")
 
 def evaluate_with_model(model_name, model_path, df):
     checkpoint_path = f"{model_name}_partial.csv"
@@ -131,6 +134,14 @@ def evaluate_with_model(model_name, model_path, df):
         print(f"🔍 Using Gemini model: {model_name} ({model_path})")
         for prompt in tqdm(prompts, desc=f"Inference (Gemini): {model_name}"):
             generated_text = call_gemini_api(prompt, model_path.replace("models/", ""), max_output_tokens=2048, temperature=0.1, top_p=0.95)
+            r, k, j = parse_eval_triplet(generated_text)
+            ratings.append(r); risks.append(k); justifications.append(j)
+            
+    elif is_openai_model(model_path):
+        openai_model = model_path.split("openai:", 1)[1]
+        print(f"🔍 Using OpenAI model: {model_name} ({openai_model})")
+        for prompt in tqdm(prompts, desc=f"Inference (OpenAI): {model_name}"):
+            generated_text = call_openai(prompt, openai_model, max_output_tokens=2048, temperature=0.1)
             r, k, j = parse_eval_triplet(generated_text)
             ratings.append(r); risks.append(k); justifications.append(j)
 
@@ -228,7 +239,8 @@ def main():
          ("llama", "meta-llama/Meta-Llama-3-8B-Instruct"),
          ("mistral", "mistralai/Mistral-7B-Instruct-v0.3"),
          #("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
-         ("gemini", "gemini-3-pro-preview"),
+         #("gemini", "gemini-3-pro-preview"),
+         ("gpt5", "openai:gpt-5"),
     ]
 
     for model_name, model_path in models:
