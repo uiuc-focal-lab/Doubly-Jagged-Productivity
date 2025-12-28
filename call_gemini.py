@@ -1,6 +1,6 @@
 from google import genai
 
-def call_gemini(prompt: str, model: str, max_output_tokens: int = 2048,
+def call_gemini_api(prompt: str, model: str, max_output_tokens: int = 2048,
                temperature: float = 0.1, top_p: float = 0.95,
                timeout_s: int = 120, max_retries: int = 8) -> str:
     """Gemini Developer API via REST generateContent."""
