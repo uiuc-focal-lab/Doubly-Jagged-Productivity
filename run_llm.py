@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from vllm import LLM, SamplingParams
 from call_claude import call_claude_bedrock
 from call_gemini import call_gemini_api
+from call_openai import call_openai_gpt
 
 # ----------------------------- SETUP -----------------------------
 def set_seed(seed: int = 28):
@@ -141,7 +142,7 @@ def evaluate_with_model(model_name, model_path, df):
         openai_model = model_path.split("openai:", 1)[1]
         print(f"🔍 Using OpenAI model: {model_name} ({openai_model})")
         for prompt in tqdm(prompts, desc=f"Inference (OpenAI): {model_name}"):
-            generated_text = call_openai(prompt, openai_model, max_output_tokens=2048, temperature=0.1)
+            generated_text = call_openai_gpt(prompt, openai_model, max_output_tokens=2048, temperature=0.1)
             r, k, j = parse_eval_triplet(generated_text)
             ratings.append(r); risks.append(k); justifications.append(j)
 

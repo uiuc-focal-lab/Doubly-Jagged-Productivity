@@ -1,6 +1,7 @@
+import os
 from openai import OpenAI
 
-def call_openai(prompt: str, model: str, max_output_tokens: int = 2048,
+def call_openai_gpt(prompt: str, model: str, max_output_tokens: int = 2048,
                 temperature: float = 0.1, max_retries: int = 8) -> str:
     """OpenAI Responses API (GPT-5 etc.). model is a model ID like 'gpt-5'."""
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -15,7 +16,6 @@ def call_openai(prompt: str, model: str, max_output_tokens: int = 2048,
                 model=model,
                 input=prompt,
                 max_output_tokens=max_output_tokens,
-                temperature=temperature,
             )
             # SDK provides convenience property
             return (resp.output_text or "").strip()
