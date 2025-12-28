@@ -87,6 +87,16 @@ def is_bedrock_model(model_path: str) -> bool:
 
 def evaluate_with_model(model_name, model_path, df):
     checkpoint_path = f"{model_name}_partial.csv"
+    if os.path.exists(checkpoint_path):
+        print(f"🔁 Resuming from checkpoint: {checkpoint_path}")
+        df_partial = pd.read_csv(checkpoint_path)
+        df = df.merge(df_partial[["Task ID", f"{model_name}_ratings", f"{model_name}_risks", f"{model_name}_motivation"]],
+                      on="Task ID", how="left", suffixes=("", "_ckpt"))
+    else:
+        df[f"{model_name}_ratings"] = None
+        df[f"{model_name}_risks"] = None
+        df[f"{model_name}_motivation"] = None
+
     to_process = df[df[f"{model_name}_ratings"].isna()].copy()
     if to_process.empty:
         print(f"✅ All rows already evaluated for {model_name}")
