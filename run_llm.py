@@ -11,6 +11,7 @@ from tqdm import tqdm
 from dotenv import load_dotenv
 from vllm import LLM, SamplingParams
 from call_claude import call_claude_bedrock
+from call_gemini import call_gemini_api
 
 # ----------------------------- SETUP -----------------------------
 def set_seed(seed: int = 28):
@@ -129,7 +130,7 @@ def evaluate_with_model(model_name, model_path, df):
     elif is_gemini_model(model_path):
         print(f"🔍 Using Gemini model: {model_name} ({model_path})")
         for prompt in tqdm(prompts, desc=f"Inference (Gemini): {model_name}"):
-            generated_text = call_gemini(prompt, model_path.replace("models/", ""), max_output_tokens=2048, temperature=0.1, top_p=0.95)
+            generated_text = call_gemini_api(prompt, model_path.replace("models/", ""), max_output_tokens=2048, temperature=0.1, top_p=0.95)
             r, k, j = parse_eval_triplet(generated_text)
             ratings.append(r); risks.append(k); justifications.append(j)
 
@@ -226,7 +227,7 @@ def main():
     models = [
          ("llama", "meta-llama/Meta-Llama-3-8B-Instruct"),
          ("mistral", "mistralai/Mistral-7B-Instruct-v0.3"),
-         ("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
+         #("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
          ("gemini", "gemini-2.5-flash"),
     ]
 
