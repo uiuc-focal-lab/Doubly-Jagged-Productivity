@@ -29,6 +29,16 @@ if not API_KEY:
 #client = boto3.client("bedrock-runtime", region_name="us-east-1")
 #claude_opus = "us.anthropic.claude-opus-4-5-20251101-v1:0"
 
+def parse_eval_triplet(generated_text: str):
+    match = re.search(r"\[.*?\]", generated_text, flags=re.DOTALL)
+    if not match:
+        return None, None, generated_text.strip()
+    try:
+        parsed = ast.literal_eval(match.group(0))
+        return int(parsed[0]), str(parsed[1]), str(parsed[2])
+    except Exception:
+        return None, None, generated_text.strip()
+
 # ----------------------------- PROMPT -----------------------------
 def build_prompt(row, model_name):
     examples = {
@@ -110,29 +120,18 @@ def evaluate_with_model(model_name, model_path, df):
     ratings, risks, justifications = [], [], []
 
     if is_bedrock_model(model_path):
-        print(f"Using Bedrock model: {model_name} ({model_path})")
+        print(f"🔍 Using Bedrock model: {model_name} ({model_path})")
         for prompt in tqdm(prompts, desc=f"Inference (Bedrock): {model_name}"):
-            generated_text = call_claude_bedrock(
-                prompt=prompt,
-                model_id=model_path,         
-                max_tokens=2048,
-                temperature=0.1,
-            )
-            match = re.search(r"\[.*?\]", generated_text, flags=re.DOTALL)
-            if match:
-                try:
-                    parsed = eval(match.group(0))
-                    ratings.append(int(parsed[0]))
-                    risks.append(str(parsed[1]))
-                    justifications.append(str(parsed[2]))
-                except:
-                    ratings.append(None)
-                    risks.append(None)
-                    justifications.append(generated_text.strip())
-            else:
-                ratings.append(None)
-                risks.append(None)
-                justifications.append(generated_text.strip())
+            generated_text = call_claude_bedrock(prompt, model_path, max_tokens=2048, temperature=0.1)
+            r, k, j = parse_eval_triplet(generated_text)
+            ratings.append(r); risks.append(k); justifications.append(j)
+
+    elif is_gemini_model(model_path):
+        print(f"🔍 Using Gemini model: {model_name} ({model_path})")
+        for prompt in tqdm(prompts, desc=f"Inference (Gemini): {model_name}"):
+            generated_text = call_gemini(prompt, model_path.replace("models/", ""), max_output_tokens=2048, temperature=0.1, top_p=0.95)
+            r, k, j = parse_eval_triplet(generated_text)
+            ratings.append(r); risks.append(k); justifications.append(j)
 
     else:
         print(f"Loading model: {model_name}")
