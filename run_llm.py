@@ -7,9 +7,10 @@ import time
 import random
 import numpy as np
 import requests
+import boto3
 from tqdm import tqdm
 from dotenv import load_dotenv
-from vllm import LLM, SamplingParams
+#from vllm import LLM, SamplingParams
 from call_claude import call_claude_bedrock
 from call_gemini import call_gemini_api
 from call_openai import call_openai_gpt
@@ -24,12 +25,12 @@ def set_seed(seed: int = 28):
     torch.backends.cudnn.benchmark = False
 
 load_dotenv()
-API_KEY = os.getenv("API_KEY")
-if not API_KEY:
-    raise ValueError("API_KEY not found in .env file")
+#API_KEY = os.getenv("API_KEY")
+#if not API_KEY:
+#    raise ValueError("API_KEY not found in .env file")
     
-#client = boto3.client("bedrock-runtime", region_name="us-east-1")
-#claude_opus = "us.anthropic.claude-opus-4-5-20251101-v1:0"
+client = boto3.client("bedrock-runtime", region_name="us-east-1")
+claude_opus = "us.anthropic.claude-opus-4-5-20251101-v1:0"
 
 def parse_eval_triplet(generated_text: str):
     match = re.search(r"\[.*?\]", generated_text, flags=re.DOTALL)
