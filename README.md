@@ -12,9 +12,15 @@ pip3 install -r requirements.txt
 ```
 export OPENAI_API_KEY='your_api_key_here'
 ```
-**Install AWS CLI (for x86)**
+**Install AWS CLI for Claude (works for x86)**
 ```
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip
 sudo ./aws/install
+```
+
+**Setup AWS Keys**
+```
+export AWS_ACCESS_KEY_ID="..."
+export AWS_SECRET_ACCESS_KEY="..."
 ```
