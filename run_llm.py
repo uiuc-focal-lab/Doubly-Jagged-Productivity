@@ -238,11 +238,11 @@ def main():
         raise KeyError("🛑 'Task ID' column not found in the input Excel file.")
 
     models = [
-         ("llama", "meta-llama/Meta-Llama-3-8B-Instruct"),
-         ("mistral", "mistralai/Mistral-7B-Instruct-v0.3"),
-         #("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
+         #("llama", "meta-llama/Meta-Llama-3-8B-Instruct"),
+         #("mistral", "mistralai/Mistral-7B-Instruct-v0.3"),
+         ("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
          #("gemini", "gemini-3-pro-preview"),
-         ("gpt5", "openai:gpt-5"),
+         #("gpt5", "openai:gpt-5"),
     ]
 
     for model_name, model_path in models:
