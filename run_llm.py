@@ -10,6 +10,8 @@ import requests
 import boto3
 from tqdm import tqdm
 from dotenv import load_dotenv
+import ast
+from typing import Optional, Tuple, Any
 #from vllm import LLM, SamplingParams
 from call_claude import call_claude_bedrock
 from call_gemini import call_gemini_api
@@ -32,15 +34,57 @@ load_dotenv()
 client = boto3.client("bedrock-runtime", region_name="us-east-1")
 claude_opus = "us.anthropic.claude-opus-4-5-20251101-v1:0"
 
-def parse_eval_triplet(generated_text: str):
-    match = re.search(r"\[.*?\]", generated_text, flags=re.DOTALL)
-    if not match:
-        return None, None, generated_text.strip()
+
+
+def _extract_balanced_square_brackets(s: str) -> list[str]:
+    out = []
+    depth = 0
+    start = None
+    for i, ch in enumerate(s):
+        if ch == '[':
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == ']' and depth > 0:
+            depth -= 1
+            if depth == 0 and start is not None:
+                out.append(s[start:i+1])
+                start = None
+    return out
+
+def _to_int(x: Any) -> Optional[int]:
     try:
-        parsed = ast.literal_eval(match.group(0))
-        return int(parsed[0]), str(parsed[1]), str(parsed[2])
+        return int(str(x).strip())
     except Exception:
-        return None, None, generated_text.strip()
+        return None
+
+def parse_eval_triplet(generated_text: str) -> Tuple[Optional[int], Optional[str], str]:
+    """
+    Expected somewhere in the text: [rating, risk, justification]
+    Returns: (rating:int|None, risk:str|None, justification:str)
+    """
+    text = generated_text.strip()
+
+    candidates = _extract_balanced_square_brackets(text)
+
+    # Try from the end: models often put the final answer last
+    for cand in reversed(candidates):
+        try:
+            parsed = ast.literal_eval(cand)
+        except Exception:
+            continue
+
+        if isinstance(parsed, (list, tuple)) and len(parsed) == 3:
+            rating = _to_int(parsed[0])
+            if rating is None:
+                continue
+            risk = str(parsed[1]).strip() if parsed[1] is not None else None
+            justification = str(parsed[2]).strip() if parsed[2] is not None else ""
+            return rating, risk, justification
+
+    # Fallback: nothing parseable
+    return None, None, text
+
 
 # ----------------------------- PROMPT -----------------------------
 def build_prompt(row, model_name):
@@ -231,7 +275,7 @@ def generate_summary(row):
 # ----------------------------- MAIN -----------------------------
 def main():
     set_seed(28)
-    df = pd.read_excel("Task_Statements_Computer_Occupations.xlsx", engine="openpyxl",sheet_name="Test")
+    df = pd.read_excel("Task_Statements_Computer_Occupations.xlsx", engine="openpyxl",sheet_name="Computer Occupations")
     df.columns = df.columns.str.rstrip()
     print("column ", df.columns) 
     if "Task ID" not in df.columns:
