@@ -59,18 +59,15 @@ def _to_int(x: Any) -> Optional[int]:
         return None
 
 def parse_eval_triplet(generated_text: str) -> Tuple[Optional[int], Optional[str], str]:
-    """
-    Expected somewhere in the text: [rating, risk, justification]
-    Returns: (rating:int|None, risk:str|None, justification:str)
-    """
     text = generated_text.strip()
-
     candidates = _extract_balanced_square_brackets(text)
 
-    # Try from the end: models often put the final answer last
     for cand in reversed(candidates):
+        # KEY FIX: remove literal newlines that break Python string literals
+        cand_clean = cand.replace("\r", " ").replace("\n", " ")
+
         try:
-            parsed = ast.literal_eval(cand)
+            parsed = ast.literal_eval(cand_clean)
         except Exception:
             continue
 
@@ -82,7 +79,6 @@ def parse_eval_triplet(generated_text: str) -> Tuple[Optional[int], Optional[str
             justification = str(parsed[2]).strip() if parsed[2] is not None else ""
             return rating, risk, justification
 
-    # Fallback: nothing parseable
     return None, None, text
 
 
@@ -187,7 +183,8 @@ def evaluate_with_model(model_name, model_path, df):
         openai_model = model_path.split("openai:", 1)[1]
         print(f"🔍 Using OpenAI model: {model_name} ({openai_model})")
         for prompt in tqdm(prompts, desc=f"Inference (OpenAI): {model_name}"):
-            generated_text = call_openai_gpt(prompt, openai_model, max_output_tokens=2048, temperature=0.1)
+            generated_text = call_openai_gpt(prompt, openai_model, max_output_tokens=2048)
+            print("generated text ", generated_text)
             r, k, j = parse_eval_triplet(generated_text)
             ratings.append(r); risks.append(k); justifications.append(j)
 
@@ -275,7 +272,7 @@ def generate_summary(row):
 # ----------------------------- MAIN -----------------------------
 def main():
     set_seed(28)
-    df = pd.read_excel("Task_Statements_Computer_Occupations.xlsx", engine="openpyxl",sheet_name="Computer Occupations")
+    df = pd.read_excel("Task_Statements_Computer_Occupations.xlsx", engine="openpyxl",sheet_name="Test")
     df.columns = df.columns.str.rstrip()
     print("column ", df.columns) 
     if "Task ID" not in df.columns:
@@ -284,9 +281,9 @@ def main():
     models = [
          #("llama", "meta-llama/Meta-Llama-3-8B-Instruct"),
          #("mistral", "mistralai/Mistral-7B-Instruct-v0.3"),
-         ("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
+         #("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
          #("gemini", "gemini-3-pro-preview"),
-         #("gpt5", "openai:gpt-5"),
+         ("gpt5", "openai:gpt-5"),
     ]
 
     for model_name, model_path in models:
