@@ -107,7 +107,7 @@ def build_prompt(row, model_name):
     }
 
     prefix = """
-For each task within different professions, determine if access to an LLM system (e.g., LLMs, LLM-based agents) can reduce the time or cost to complete the task while keeping equivalent quality. For determination, use your knowledge of the current capabilities of such systems. Next, evaluate the risk of using LLMs for performing the same task. Consider a balanced position, no need to be super alarmist or overly confident in the safety of current models. First, determine whether the task is safety critical, i.e., any unintentional errors or exploitation of LLM capabilities by malicious actors can cause significant harm at individual, organizational, or societal level. If yes, then quantify the extent to which using LLMs in performing the task increases the risk compared to not using them. 
+For each task within different professions, determine if access to an LLM system (e.g., LLMs, LLM-based agents) can reduce the time or cost to complete the task while keeping equivalent quality. For determination, use your knowledge of the current capabilities of such systems. Next, evaluate the risk of using LLMs for performing the same task. Take a balanced position, no need to be super alarmist or overly confident in the safety of current models. First, determine whether the task is safety critical, i.e., any unintentional errors or exploitation of LLM capabilities by malicious actors can cause significant harm at individual, organizational, or societal level. If yes, then quantify the extent to which using LLMs in performing the task increases the risk compared to not using them. 
 
 Key vulnerabilities of LLM systems to consider include:
 - Discrimination: Unequal treatment of individuals or groups by LLM systems, often based on race, gender, or other sensitive characteristics, resulting in unfair outcomes and representation of those groups. Further, accuracy and effectiveness of LLM decisions and actions are dependent on group membership, where decisions in LLM system design and biased training data lead to
@@ -125,8 +125,8 @@ include LLM-facilitated plagiarism for research or education, impersonating a tr
 
 
 For each evaluation:
-- Rate both the reward and risk associated with LLM systems on a scale from 0 to 5. Here, for rewards, a rating of 0 means that using LLM systems cannot reduce task completion time or cost while keeping equivalent quality. A rating of 0 for risk means that the task is not safety critical. 
-- Provide a detailed justification in the format: [rewards_rating, "rewards_justification", risks_rating, "risks", "risks_justification"].
+- Rate both the reward and risk associated with LLM systems on a scale from 0 to 5. Here, for rewards, a rating of 0 means that using LLM systems cannot reduce task completion time or cost while keeping equivalent quality. A rating of 0 for risks means that the task is not safety critical. 
+- Provide a detailed justification in the format: [rewards_rating, "rewards_justification", risks_rating, "risks_types", "risks_justification"].
 """
 
     #shot_key = "gpt5" if "gpt5" in model_name else ("mistral" if "mistral" in model_name else "claude")
@@ -173,7 +173,7 @@ def evaluate_with_model(model_name, model_path, df):
     if is_bedrock_model(model_path):
         print(f"🔍 Using Bedrock model: {model_name} ({model_path})")
         for prompt in tqdm(prompts, desc=f"Inference (Bedrock): {model_name}"):
-            generated_text = call_claude_bedrock(prompt, model_path, max_tokens=2048, temperature=0.1)
+            generated_text = call_claude_bedrock(prompt, model_path, max_tokens=2048, temperature=0)
             rr, rj, rir, rt, rij = parse_eval(generated_text)
             rewards_ratings.append(rr)
             rewards_justifications.append(rj)
@@ -184,7 +184,7 @@ def evaluate_with_model(model_name, model_path, df):
     elif is_gemini_model(model_path):
         print(f"🔍 Using Gemini model: {model_name} ({model_path})")
         for prompt in tqdm(prompts, desc=f"Inference (Gemini): {model_name}"):
-            generated_text = call_gemini_api(prompt, model_path.replace("models/", ""), max_output_tokens=2048, temperature=0.1, top_p=0.95)
+            generated_text = call_gemini_api(prompt, model_path.replace("models/", ""), max_output_tokens=2048, temperature=0, top_p=0.95)
             rr, rj, rir, rt, rij = parse_eval(generated_text)
             rewards_ratings.append(rr)
             rewards_justifications.append(rj)
@@ -293,7 +293,7 @@ def generate_summary(row):
 # ----------------------------- MAIN -----------------------------
 def main():
     set_seed(28)
-    df = pd.read_excel("Task_Statements_Computer_Occupations.xlsx", engine="openpyxl",sheet_name="Test")
+    df = pd.read_excel("Task_Statements_Computer_Occupations.xlsx", engine="openpyxl",sheet_name="Computer Occupations")
     df.columns = df.columns.str.rstrip()
     print("column ", df.columns) 
     if "Task ID" not in df.columns:
@@ -302,9 +302,9 @@ def main():
     models = [
          #("llama", "meta-llama/Meta-Llama-3-8B-Instruct"),
          #("mistral", "mistralai/Mistral-7B-Instruct-v0.3"),
-         #("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
+         ("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
          #("gemini", "gemini-3-pro-preview"),
-         ("gpt5", "openai:gpt-5"),
+         #("gpt5", "openai:gpt-5"),
     ]
 
     for model_name, model_path in models:
