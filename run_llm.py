@@ -35,7 +35,6 @@ client = boto3.client("bedrock-runtime", region_name="us-east-1")
 claude_opus = "us.anthropic.claude-opus-4-5-20251101-v1:0"
 
 
-
 def _extract_balanced_square_brackets(s: str) -> list[str]:
     out = []
     depth = 0
@@ -58,12 +57,17 @@ def _to_int(x: Any) -> Optional[int]:
     except Exception:
         return None
 
-def parse_eval_triplet(generated_text: str) -> Tuple[Optional[int], Optional[str], str]:
+def parse_eval(generated_text: str) -> Tuple[Optional[int], Optional[str], Optional[int], Optional[str], str]:
+    """
+    Parse a bracketed list/tuple with shape:
+      [int, str, int, str, str]
+    Scans balanced [ ... ] blocks from the end and returns the first valid parse.
+    """
     text = generated_text.strip()
     candidates = _extract_balanced_square_brackets(text)
 
     for cand in reversed(candidates):
-        # KEY FIX: remove literal newlines that break Python string literals
+        # Fix common LLM formatting issue: literal newlines inside quoted strings
         cand_clean = cand.replace("\r", " ").replace("\n", " ")
 
         try:
@@ -71,63 +75,62 @@ def parse_eval_triplet(generated_text: str) -> Tuple[Optional[int], Optional[str
         except Exception:
             continue
 
-        if isinstance(parsed, (list, tuple)) and len(parsed) == 3:
-            rating = _to_int(parsed[0])
-            if rating is None:
-                continue
-            risk = str(parsed[1]).strip() if parsed[1] is not None else None
-            justification = str(parsed[2]).strip() if parsed[2] is not None else ""
-            return rating, risk, justification
+        if isinstance(parsed, (list, tuple)) and len(parsed) == 5:
+            a = _to_int(parsed[0])
+            b = str(parsed[1]).strip() if parsed[1] is not None else None
+            c = _to_int(parsed[2])
+            d = str(parsed[3]).strip() if parsed[3] is not None else None
+            e = str(parsed[4]).strip() if parsed[4] is not None else ""
 
-    return None, None, text
+            # Require the int fields to be parseable
+            if a is None or c is None:
+                continue
+
+            return a, b, c, d, e
+
+    # fallback: no parseable 5-tuple found
+    return None, None, None, None, text
+
 
 
 # ----------------------------- PROMPT -----------------------------
 def build_prompt(row, model_name):
     examples = {
-        "claude": [
-            "Profession: Mathematicians\nTask: Conduct research to extend mathematical knowledge in traditional areas, such as algebra, geometry, probability, and logic.\nExample Evaluation: [0, \"No Risks\", \"LLMs can significantly accelerate mathematical research by suggesting lemmas, creating informal plans for the proofs, or fetching background knowledge. The task is not safety critical and therefore there is no risk\"]",
-            "Profession: Pharmacists\nTask: Provide information and advice regarding drug interactions, side effects, dosage, and proper medication storage.\nExample Evaluation: [5, \"Hallucination and Misinformation, Adversarial risks, Privacy, Robustness\", \"The knowledge extraction capabilities of LLMs makes them suitable for performing this task, and their usage can substantially reduce the completion time. However, they can provide misleading guidelines, are not robust when the same question is asked in different phrasings, and malicious actors can exploit them to extract sensitive information. These vulnerabilities can cause widespread harm\"]",
-            "Profession: Software Quality Assurance Analysts and Testers\nTask: Perform initial debugging procedures by reviewing configuration files, logs, or code pieces to determine breakdown source.\nExample Evaluation: [1, \"Robustness\", \"LLM-based code agents can significantly reduce the completion time by assisting in reviews and determining sources. Lack of robustness can sometimes cause critical issues in software to persist. However, the same is true for humans, so therefore the use of LLMs does not significantly increase risks\"]", 
-            "Profession: Human Resources Managers\nTask: Identify staff vacancies and recruit, interview, and select applicants.\nExample Evaluation: [3,\"Toxicity\", \"LLMs can significantly reduce the time in selecting, interviewing, and recruiting applicants. However, any underlying biases within LLMs can cause biased recruitments harming the reputation of the organization. \"]",
-            "Profession: Models\nTask: Pose for artists and photographers.\nExample Evaluation: [0, \"No Risks\", \"LLMs can suggest poses and make up suggestions. However, the performance on the core task depends on the abilities of the Model, therefore the impact of LLMs on the completion time of this task will not be significant. \"]",
-            "Profession: Claims Adjusters, Examiners, and Investigators\nTask: Review police reports, medical treatment records, medical bills, or physical property damage to determine the extent of liability.\nExample Evaluation: [5, \"Privacy, Adversarial risks\", \"LLM-based agents can significantly reduce the task completion time. However, the task requires processing highly sensitive personal information. The LLM may uninitentially or under Jailbreaks/prompt injection leak private information leading to individual, organizational, and societal harm\"]",
-        ],
-        "gpt5": [
-            "Profession: Mathematicians\nTask: Conduct research to extend mathematical knowledge in traditional areas, such as algebra, geometry, probability, and logic.\nExample Evaluation: [0, \"No Risks\", \"LLMs can significantly accelerate mathematical research by suggesting lemmas, creating informal plans for the proofs, or fetching background knowledge. The task is not safety critical and therefore there is no risk\"]",
-            "Profession: Pharmacists\nTask: Provide information and advice regarding drug interactions, side effects, dosage, and proper medication storage.\nExample Evaluation: [5, \"Hallucination and Misinformation, Adversarial risks, Privacy, Robustness\", \"The knowledge extraction capabilities of LLMs makes them suitable for performing this task, and their usage can substantially reduce the completion time. However, they can provide misleading guidelines, are not robust when the same question is asked in different phrasings, and malicious actors can exploit them to extract sensitive information. These vulnerabilities can cause widespread harm\"]",
-            "Profession: Software Quality Assurance Analysts and Testers\nTask: Perform initial debugging procedures by reviewing configuration files, logs, or code pieces to determine breakdown source.\nExample Evaluation: [1, \"Robustness\", \"LLM-based code agents can significantly reduce the completion time by assisting in reviews and determining sources. Lack of robustness can sometimes cause critical issues in software to persist. However, the same is true for humans, so therefore the use of LLMs does not significantly increase risks\"]", 
-            "Profession: Human Resources Managers\nTask: Identify staff vacancies and recruit, interview, and select applicants.\nExample Evaluation: [3,\"Toxicity\", \"LLMs can significantly reduce the time in selecting, interviewing, and recruiting applicants. However, any underlying biases within LLMs can cause biased recruitments harming the reputation of the organization. \"]",
-            "Profession: Models\nTask: Pose for artists and photographers.\nExample Evaluation: [0, \"No Risks\", \"LLMs can suggest poses and make up suggestions. However, the performance on the core task depends on the abilities of the Model, therefore the impact of LLMs on the completion time of this task will not be significant. \"]",
-            "Profession: Claims Adjusters, Examiners, and Investigators\nTask: Review police reports, medical treatment records, medical bills, or physical property damage to determine the extent of liability.\nExample Evaluation: [5, \"Privacy, Adversarial risks\", \"LLM-based agents can significantly reduce the task completion time. However, the task requires processing highly sensitive personal information. The LLM may uninitentially or under Jailbreaks/prompt injection leak private information leading to individual, organizational, and societal harm\"]",
-        ],
-        "gemini": [
-            "Profession: Mathematicians\nTask: Conduct research to extend mathematical knowledge in traditional areas, such as algebra, geometry, probability, and logic.\nExample Evaluation: [0, \"No Risks\", \"LLMs can significantly accelerate mathematical research by suggesting lemmas, creating informal plans for the proofs, or fetching background knowledge. The task is not safety critical and therefore there is no risk\"]",
-            "Profession: Pharmacists\nTask: Provide information and advice regarding drug interactions, side effects, dosage, and proper medication storage.\nExample Evaluation: [5, \"Hallucination and Misinformation, Adversarial risks, Privacy, Robustness\", \"The knowledge extraction capabilities of LLMs makes them suitable for performing this task, and their usage can substantially reduce the completion time. However, they can provide misleading guidelines, are not robust when the same question is asked in different phrasings, and malicious actors can exploit them to extract sensitive information. These vulnerabilities can cause widespread harm\"]",
-            "Profession: Software Quality Assurance Analysts and Testers\nTask: Perform initial debugging procedures by reviewing configuration files, logs, or code pieces to determine breakdown source.\nExample Evaluation: [1, \"Robustness\", \"LLM-based code agents can significantly reduce the completion time by assisting in reviews and determining sources. Lack of robustness can sometimes cause critical issues in software to persist. However, the same is true for humans, so therefore the use of LLMs does not significantly increase risks\"]", 
-            "Profession: Human Resources Managers\nTask: Identify staff vacancies and recruit, interview, and select applicants.\nExample Evaluation: [3,\"Toxicity\", \"LLMs can significantly reduce the time in selecting, interviewing, and recruiting applicants. However, any underlying biases within LLMs can cause biased recruitments harming the reputation of the organization. \"]",
-            "Profession: Models\nTask: Pose for artists and photographers.\nExample Evaluation: [0, \"No Risks\", \"LLMs can suggest poses and make up suggestions. However, the performance on the core task depends on the abilities of the Model, therefore the impact of LLMs on the completion time of this task will not be significant. \"]",
-            "Profession: Claims Adjusters, Examiners, and Investigators\nTask: Review police reports, medical treatment records, medical bills, or physical property damage to determine the extent of liability.\nExample Evaluation: [5, \"Privacy, Adversarial risks\", \"LLM-based agents can significantly reduce the task completion time. However, the task requires processing highly sensitive personal information. The LLM may uninitentially or under Jailbreaks/prompt injection leak private information leading to individual, organizational, and societal harm\"]",
+        "LLM": [
+            "Profession: Mathematicians\nTask: Conduct research to extend mathematical knowledge in traditional areas, such as algebra, geometry, probability, and logic.\nExample Evaluation: [2,\"LLMs can significantly speed up supporting work—literature triage, writing or structuring proofs, brainstorming lemma candidates, and quick computational checks, but they rarely generate trustworthy new mathematical insights, and their frequent plausible errors create verification overhead that limits net savings.\", 0, \"No Risks\", \"The task is not safety critical and therefore there is no risk\"]",
+            "Profession: Pharmacists\nTask: Provide information and advice regarding drug interactions, side effects, dosage, and proper medication storage.\nExample Evaluation: [3, \"LLM systems can cut time by pulling relevant facts from drug references and quickly drafting patient-friendly guidance on interactions, side effects, dosing, and storage, as well as producing notes or handouts and answering routine questions.\",5, \"Misinformation, Privacy, Discrimination, Security\", \"This task is safety-critical because incorrect guidance on interactions, side effects, or dosing can directly cause patient harm; LLM errors therefore map to high-impact misinformation risk. The work also routinely involves sensitive health and identity data (privacy), can yield unequal quality or recommendations across patient groups (discrimination), and often sits inside clinical/enterprise systems whose compromise could expose records or alter advice (security).\"]",
+            #"Profession: Software Quality Assurance Analysts and Testers\nTask: Perform initial debugging procedures by reviewing configuration files, logs, or code pieces to determine breakdown source.\nExample Evaluation: [4, \"LLM systems can dramatically speed up first-pass debugging by summarizing and correlating logs/configs, mapping errors to likely root causes, searching the codebase for relevant call paths or changes, and proposing next checks or minimal repro steps, turning hours of triage into minutes in many cases.\", 1, \"Robustness\", \"LLM-based code agents can significantly reduce the completion time by assisting in reviews and determining sources. Lack of robustness can sometimes cause critical issues in software to persist. However, the same is true for humans, so therefore the use of LLMs does not significantly increase risks\"]",
+            "Profession: Human Resources Managers\nTask: Identify staff vacancies and recruit, interview, and select applicants.\nExample Evaluation: [3, \"LLM systems can save a lot of time by drafting job posts, sourcing/shortlisting from resumes against criteria, generating interview questions or rubrics, coordinating scheduling and candidate communications, and summarizing interview notes. The main remaining effort is the high-judgment part—calibrating fit, negotiating priorities with hiring managers, and making final selections, which limits full automation.\", 3,\"Discrimination, Privacy\", \"Hiring is high-stakes for livelihoods and legally regulated, so LLM errors can cause serious harm. The biggest risk is discrimination (biased screening/interviewing/selection), plus privacy because recruiting uses sensitive personal data (resumes, background details). \"]",
+            "Profession: Models\nTask: Pose for artists and photographers.\nExample Evaluation: [1, \"LLMs can help with planning (mood boards, pose lists, shot lists, direction cues, scheduling or coordination), but the core value—physically posing and performing on set—can’t be reduced much by an LLM system.\",0, \"No Risks\", \"The task is not safety critical. \"]",
+            "Profession: Claims Adjusters, Examiners, and Investigators\nTask: Review police reports, medical treatment records, medical bills, or physical property damage to determine the extent of liability.\nExample Evaluation: [4, \"LLM systems can save major time by extracting key facts from reports, records, or bills, building timelines, normalizing or flagging line items, cross-referencing narratives for consistency, and producing a clear liability or damages summary with supporting citations back to source documents.\",5, \"Misinformation, Privacy, Discrimination, Security\", \"LLM use here elevates misinformation risk (wrong extraction or summaries of reports, bills, timelines), privacy risk (highly sensitive medical and personal data), discrimination risk (unequal claim handling or inferred credibility across groups), and security risk (exposure/manipulation of claim files and workflows).\"]",
         ],
     }
 
     prefix = """
-For each task within different professions, determine if access to an LLM system (e.g., LLMs, LLM-based agents), can improve efficiency by reducing the time or cost to complete the task with equivalent quality by at least half. For determination, use your knowledge of the current capabilities of such systems. If the answer is yes, then evaluate the risk of using LLMs for performing the task. Consider a balanced perspective between risks and rewards, no need to be super alarmist or overly confident in the safety of current models. First, determine whether the task is safety critical, i.e., any unintentional errors or exploitation of LLM capabilities by malicious actors can cause significant harm at individual, organizational, or societal level. If yes, then quantify the extent to which using LLMs in performing the task increases the risk compared to not using them. 
+For each task within different professions, determine if access to an LLM system (e.g., LLMs, LLM-based agents) can reduce the time or cost to complete the task while keeping equivalent quality. For determination, use your knowledge of the current capabilities of such systems. Next, evaluate the risk of using LLMs for performing the same task. Consider a balanced position, no need to be super alarmist or overly confident in the safety of current models. First, determine whether the task is safety critical, i.e., any unintentional errors or exploitation of LLM capabilities by malicious actors can cause significant harm at individual, organizational, or societal level. If yes, then quantify the extent to which using LLMs in performing the task increases the risk compared to not using them. 
 
 Key vulnerabilities of LLM systems to consider include:
-- Hallucination and Misinformation: LLM generates or propagates false, fabricated, or misleading content, whether invented internally (hallucination) or repeated/amplified from external sources (misinformation), in ways that can distort knowledge, mislead users, or cause harmful decisions
-- Toxicity: LLM produces offensive, abusive, or biased content that directly harms individuals or groups.
-- Privacy: LLM exposes, misuses, or fails to protect sensitive personal, organizational, or proprietary information during training, inference, or downstream use 
-- Adversarial risks: LLM is exploited or manipulated through malicious inputs, outputs, or usage patterns (e.g., jailbreaks or prompt injection), either by external attackers or insiders, leading to breaches of confidentiality, integrity, availability, or safe operation.
-- Robustness: LLM produces unreliable, unstable, or brittle outputs when exposed to variations in inputs, contexts, or deployment conditions, even when those inputs are benign
+- Discrimination: Unequal treatment of individuals or groups by LLM systems, often based on race, gender, or other sensitive characteristics, resulting in unfair outcomes and representation of those groups. Further, accuracy and effectiveness of LLM decisions and actions are dependent on group membership, where decisions in LLM system design and biased training data lead to
+unequal outcomes, reduced benefits, increased effort, and alienation of users.
+- Toxicity: LLMs can expose users to harmful, abusive, unsafe, or inappropriate content. May involve providing advice or encouraging action. Examples of toxic content include hate speech, violence, extremism, illegal acts, or child sexual abuse material, as well as content that violates community norms such as profanity, inflammatory, political speech, or pornography.
+- Privacy: LLM systems memorize and leak sensitive personal data or infer private information about individuals without their consent. Unexpected or unauthorized sharing of data and information can compromise user expectation of privacy, assist identity theft, or cause loss of confidential intellectual property. 
+- Security: Vulnerabilities can be exploited in LLM systems, software development toolchains, and hardware resulting in unauthorized access, data and privacy breaches, or system manipulation causing unsafe outputs or behavior. 
+- Misinformation: LLM systems can inadvertently generate or spread incorrect or deceptive information, which can lead to inaccurate beliefs in users and undermine their autonomy.
+Humans that make decisions based on false beliefs can experience physical, emotional, or material harms. Highly personalized LLM-generated misinformation creates “filter bubbles” where individuals only see what matches their existing beliefs, undermining shared
+reality and weakening social cohesion and political processes. 
+- Malicious actors and Misuse: LLM systems can be used to conduct large-scale disinformation campaigns, malicious surveillance, or targeted and sophisticated automated censorship and propaganda,
+with the aim of manipulating political processes, public opinion, and behavior. LLM systems can be used to develop cyber weapons (e.g., by coding cheaper, more effective malware), develop new or enhance existing weapons (e.g., Lethal Autonomous
+Weapons or chemical, biological, radiological, nuclear, and high-yield explosives), or use weapons to cause mass harm. LLM systems can be used to gain a personal advantage over others through cheating, fraud, scams, blackmail, or targeted manipulation of beliefs or behavior. Examples
+include LLM-facilitated plagiarism for research or education, impersonating a trusted or fake individual for illegitimate financial benefit, or creating humiliating or sexual imagery.
+
 
 For each evaluation:
-- Rate the risk associated with LLM systems on a scale from 0 to 5. Here a rating of 0 means that using LLM systems cannot reduce task completion time or the task is not safety critical 
-- Provide a detailed justification in the format: [rating, "risks", "justification"].
+- Rate both the reward and risk associated with LLM systems on a scale from 0 to 5. Here, for rewards, a rating of 0 means that using LLM systems cannot reduce task completion time or cost while keeping equivalent quality. A rating of 0 for risk means that the task is not safety critical. 
+- Provide a detailed justification in the format: [rewards_rating, "rewards_justification", risks_rating, "risks", "risks_justification"].
 """
 
-    shot_key = "gpt5" if "gpt5" in model_name else ("mistral" if "mistral" in model_name else "claude")
-    examples_text = "\n\n".join(examples[shot_key])
+    #shot_key = "gpt5" if "gpt5" in model_name else ("mistral" if "mistral" in model_name else "claude")
+    examples_text = "\n\n".join(examples["LLM"])
     task = f"Given the profession: {row['Title']}, and a specific task: '{row['Task']}', evaluate the risk of using an LLM system to perform the task."
     return f"{prefix}\n\n{examples_text}\n\n{task}"
 
@@ -149,76 +152,94 @@ def evaluate_with_model(model_name, model_path, df):
     if os.path.exists(checkpoint_path):
         print(f"🔁 Resuming from checkpoint: {checkpoint_path}")
         df_partial = pd.read_csv(checkpoint_path)
-        df = df.merge(df_partial[["Task ID", f"{model_name}_ratings", f"{model_name}_risks", f"{model_name}_motivation"]],
+        df = df.merge(df_partial[["Task ID", f"{model_name}_rewards_ratings", f"{model_name}_rewards_justifications",  f"{model_name}_risks_ratings", f"{model_name}_risks_types", f"{model_name}_risks_justifications"]],
                       on="Task ID", how="left", suffixes=("", "_ckpt"))
     else:
-        df[f"{model_name}_ratings"] = None
-        df[f"{model_name}_risks"] = None
-        df[f"{model_name}_motivation"] = None
+        df[f"{model_name}_rewards_ratings"] = None
+        df[f"{model_name}_rewards_justifications"] = None
+        df[f"{model_name}_risks_ratings"] = None
+        df[f"{model_name}_risks_types"] = None
+        df[f"{model_name}_risks_justifications"] = None
 
-    to_process = df[df[f"{model_name}_ratings"].isna()].copy()
+    to_process = df[df[f"{model_name}_rewards_ratings"].isna()].copy()
     if to_process.empty:
         print(f"✅ All rows already evaluated for {model_name}")
         return df
 
     prompts = [build_prompt(row, model_name) for _, row in to_process.iterrows()]
 
-    ratings, risks, justifications = [], [], []
+    rewards_ratings, rewards_justifications, risks_ratings, risks_types, risks_justifications = [], [], []
 
     if is_bedrock_model(model_path):
         print(f"🔍 Using Bedrock model: {model_name} ({model_path})")
         for prompt in tqdm(prompts, desc=f"Inference (Bedrock): {model_name}"):
             generated_text = call_claude_bedrock(prompt, model_path, max_tokens=2048, temperature=0.1)
-            r, k, j = parse_eval_triplet(generated_text)
-            ratings.append(r); risks.append(k); justifications.append(j)
+            rr, rj, rir, rt, rij = parse_eval(generated_text)
+            rewards_ratings.append(rr)
+            rewards_justifications.append(rj)
+            risks_ratings.append(rir)
+            risks_types.append(rt)
+            risks_justifications.append(rij)
 
     elif is_gemini_model(model_path):
         print(f"🔍 Using Gemini model: {model_name} ({model_path})")
         for prompt in tqdm(prompts, desc=f"Inference (Gemini): {model_name}"):
             generated_text = call_gemini_api(prompt, model_path.replace("models/", ""), max_output_tokens=2048, temperature=0.1, top_p=0.95)
-            r, k, j = parse_eval_triplet(generated_text)
-            ratings.append(r); risks.append(k); justifications.append(j)
+            rr, rj, rir, rt, rij = parse_eval(generated_text)
+            rewards_ratings.append(rr)
+            rewards_justifications.append(rj)
+            risks_ratings.append(rir)
+            risks_types.append(rt)
+            risks_justifications.append(rij)
             
     elif is_openai_model(model_path):
         openai_model = model_path.split("openai:", 1)[1]
         print(f"🔍 Using OpenAI model: {model_name} ({openai_model})")
         for prompt in tqdm(prompts, desc=f"Inference (OpenAI): {model_name}"):
             generated_text = call_openai_gpt(prompt, openai_model, max_output_tokens=2048)
-            print("generated text ", generated_text)
-            r, k, j = parse_eval_triplet(generated_text)
-            ratings.append(r); risks.append(k); justifications.append(j)
+            #print("generated text ", generated_text)
+            rr, rj, rir, rt, rij = parse_eval(generated_text)
+            rewards_ratings.append(rr)
+            rewards_justifications.append(rj)
+            risks_ratings.append(rir)
+            risks_types.append(rt)
+            risks_justifications.append(rij)
 
+    #else:
+    #    print(f"Loading model: {model_name}")
+    #    llm = LLM(model=model_path, dtype="half", trust_remote_code=True)
+    #    sampling_params = SamplingParams(temperature=0.1, top_p=0.95, max_tokens=2048)
+    #    outputs = llm.generate(prompts, sampling_params)
+
+    #    for output in tqdm(outputs, desc=f"Inference: {model_name}"):
+    #        generated_text = output.outputs[0].text
+    #        match = re.search(r"\[.*?\]", generated_text, flags=re.DOTALL)
+    #        if match:
+    #            try:
+    #                parsed = eval(match.group(0))
+    #                ratings.append(int(parsed[0]))
+    #                risks.append(str(parsed[1]))
+    #                justifications.append(str(parsed[2]))
+    #            except:
+    #                ratings.append(None)
+    #                risks.append(None)
+    #                justifications.append(generated_text.strip())
     else:
-        print(f"Loading model: {model_name}")
-        llm = LLM(model=model_path, dtype="half", trust_remote_code=True)
-        sampling_params = SamplingParams(temperature=0.1, top_p=0.95, max_tokens=2048)
-        outputs = llm.generate(prompts, sampling_params)
+        rewards_ratings.append(None)
+        rewards_justifications.append(None)
+        risks_ratings.append(None)
+        risks_types.append(None)
+        risks_justifications.append(None)
 
-        for output in tqdm(outputs, desc=f"Inference: {model_name}"):
-            generated_text = output.outputs[0].text
-            match = re.search(r"\[.*?\]", generated_text, flags=re.DOTALL)
-            if match:
-                try:
-                    parsed = eval(match.group(0))
-                    ratings.append(int(parsed[0]))
-                    risks.append(str(parsed[1]))
-                    justifications.append(str(parsed[2]))
-                except:
-                    ratings.append(None)
-                    risks.append(None)
-                    justifications.append(generated_text.strip())
-            else:
-                ratings.append(None)
-                risks.append(None)
-                justifications.append(generated_text.strip())
+        #del llm
+        #torch.cuda.empty_cache()
+        #gc.collect()
 
-        del llm
-        torch.cuda.empty_cache()
-        gc.collect()
-
-    to_process[f"{model_name}_ratings"] = ratings
-    to_process[f"{model_name}_risks"] = risks
-    to_process[f"{model_name}_motivation"] = justifications
+    to_process[f"{model_name}_rewards_ratings"] = rewards_ratings
+    to_process[f"{model_name}_rewards_justifications"] = rewards_justifications
+    to_process[f"{model_name}_risks_ratings"] = risks_ratings
+    to_process[f"{model_name}_risks_types"] = risks_types
+    to_process[f"{model_name}_risks_justifications"] = risks_justifications
     df.update(to_process)
 
     df.to_csv(checkpoint_path, index=False, encoding="utf-8")
@@ -281,43 +302,43 @@ def main():
     models = [
          #("llama", "meta-llama/Meta-Llama-3-8B-Instruct"),
          #("mistral", "mistralai/Mistral-7B-Instruct-v0.3"),
-         #("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
+         ("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
          #("gemini", "gemini-3-pro-preview"),
-         ("gpt5", "openai:gpt-5"),
+         #("gpt5", "openai:gpt-5"),
     ]
 
     for model_name, model_path in models:
         df = evaluate_with_model(model_name, model_path, df)
     
-    rating_cols = [f"{name}_ratings" for name, _ in models]
-    df["TEAI_rating"] = df.apply(lambda row: mode(row, rating_cols), axis=1)
+    #rating_cols = [f"{name}_ratings" for name, _ in models]
+    #df["TEAI_rating"] = df.apply(lambda row: mode(row, rating_cols), axis=1)
 
-    summary_path = "TEAI_result.xlsx"
-    if os.path.exists(summary_path):
-        print("🔁 Resuming summarization from:", summary_path)
-        df_existing = pd.read_excel(summary_path, engine="openpyxl")
-        if "teai_summary" in df_existing.columns:
-            df = df.merge(df_existing[["Task ID", "teai_summary"]], on="Task ID", how="left")
+    #summary_path = "TEAI_result.xlsx"
+    #if os.path.exists(summary_path):
+    #    print("🔁 Resuming summarization from:", summary_path)
+    #    df_existing = pd.read_excel(summary_path, engine="openpyxl")
+    #    if "teai_summary" in df_existing.columns:
+    #        df = df.merge(df_existing[["Task ID", "teai_summary"]], on="Task ID", how="left")
 
-    failures = []
+    #failures = []
 
-    for task_id, row in tqdm(df[df["teai_summary"].isna()].set_index("Task ID").iterrows(), desc="Summarization"):
-        summary = generate_summary(row)
-        if summary:
-            df.loc[df["Task ID"] == task_id, "teai_summary"] = summary
-        else:
-            failures.append(task_id)
-        if len(failures) % 20 == 0:
-            df.to_excel(summary_path, index=False, engine="openpyxl")
+    #for task_id, row in tqdm(df[df["teai_summary"].isna()].set_index("Task ID").iterrows(), desc="Summarization"):
+    #    summary = generate_summary(row)
+    #    if summary:
+    #        df.loc[df["Task ID"] == task_id, "teai_summary"] = summary
+    #    else:
+    #        failures.append(task_id)
+    #    if len(failures) % 20 == 0:
+    #        df.to_excel(summary_path, index=False, engine="openpyxl")
 
-    df.to_excel(summary_path, index=False, engine="openpyxl")
-    print("✅ All results saved to", summary_path)
+    #df.to_excel(summary_path, index=False, engine="openpyxl")
+    #print("✅ All results saved to", summary_path)
 
-    if failures:
-        with open("teai_failed.log", "w") as f:
-            for task_id in failures:
-                f.write(f"{task_id}\n")
-        print(f"⚠️ Logged {len(failures)} failed tasks in teai_failed.log")
+    #if failures:
+    #    with open("teai_failed.log", "w") as f:
+    #        for task_id in failures:
+    #            f.write(f"{task_id}\n")
+    #    print(f"⚠️ Logged {len(failures)} failed tasks in teai_failed.log")
 
 if __name__ == "__main__":
     main()
