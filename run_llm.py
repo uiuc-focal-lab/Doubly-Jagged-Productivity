@@ -168,7 +168,7 @@ def evaluate_with_model(model_name, model_path, df):
 
     prompts = [build_prompt(row, model_name) for _, row in to_process.iterrows()]
 
-    rewards_ratings, rewards_justifications, risks_ratings, risks_types, risks_justifications = [], [], []
+    rewards_ratings, rewards_justifications, risks_ratings, risks_types, risks_justifications = [], [], [], [], []
 
     if is_bedrock_model(model_path):
         print(f"🔍 Using Bedrock model: {model_name} ({model_path})")
