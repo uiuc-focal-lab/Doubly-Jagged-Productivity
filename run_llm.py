@@ -468,15 +468,15 @@ def main():
     models = [
         # ("llama", "meta-llama/Meta-Llama-3-8B-Instruct"),
         # ("mistral", "mistralai/Mistral-7B-Instruct-v0.3"),
-        ("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
+        #("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
         # ("gemini", "gemini-3-pro-preview"),
-        # ("gpt5", "openai:gpt-5"),
+         ("gpt5", "openai:gpt-5"),
     ]
 
     for model_name, model_path in models:
         df = evaluate_with_model(model_name, model_path, df)
-        _atomic_write_csv(df, output_path)
-        print(f"✅ Wrote combined output to {output_path}")
+        _atomic_write_csv(df, f"{model_name}_partial.csv")
+        print(f"✅ Wrote combined output")
 
     # rating_cols = [f"{name}_ratings" for name, _ in models]
     # df["TEAI_rating"] = df.apply(lambda row: mode(row, rating_cols), axis=1)
