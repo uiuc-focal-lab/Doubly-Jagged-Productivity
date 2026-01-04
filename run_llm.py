@@ -42,6 +42,7 @@ client = boto3.client("bedrock-runtime", region_name="us-east-1")
 claude_opus = "us.anthropic.claude-opus-4-5-20251101-v1:0"
 
 
+
 def _extract_balanced_square_brackets(s: str) -> list[str]:
     out = []
     depth = 0
@@ -54,10 +55,9 @@ def _extract_balanced_square_brackets(s: str) -> list[str]:
         elif ch == ']' and depth > 0:
             depth -= 1
             if depth == 0 and start is not None:
-                out.append(s[start:i + 1])
+                out.append(s[start:i+1])
                 start = None
     return out
-
 
 def _to_int(x: Any) -> Optional[int]:
     try:
@@ -65,18 +65,24 @@ def _to_int(x: Any) -> Optional[int]:
     except Exception:
         return None
 
-
-def parse_eval(generated_text: str) -> Tuple[Optional[int], Optional[str], Optional[int], Optional[str], str]:
+def parse_risks_rewards(
+    generated_text: str
+) -> Tuple[Optional[int], Optional[str], str, Optional[int], str]:
     """
-    Parse a bracketed list/tuple with shape:
-      [int, str, int, str, str]
-    Scans balanced [ ... ] blocks from the end and returns the first valid parse.
+    Parse:
+      [ risks_rating, "risks_types", "risks_justification", rewards_rating, "rewards_justification" ]
+    Returns:
+      (risks_rating, risks_types, risks_justification, rewards_rating, rewards_justification)
+
+    On failure:
+      (None, None, original_text, None, "")
     """
     text = generated_text.strip()
     candidates = _extract_balanced_square_brackets(text)
 
+    # Try from the end (often where the model puts the final structured answer)
     for cand in reversed(candidates):
-        # Fix common LLM formatting issue: literal newlines inside quoted strings
+        # Fix: literal newlines inside quoted strings break ast.literal_eval
         cand_clean = cand.replace("\r", " ").replace("\n", " ")
 
         try:
@@ -85,20 +91,20 @@ def parse_eval(generated_text: str) -> Tuple[Optional[int], Optional[str], Optio
             continue
 
         if isinstance(parsed, (list, tuple)) and len(parsed) == 5:
-            a = _to_int(parsed[0])
-            b = str(parsed[1]).strip() if parsed[1] is not None else None
-            c = _to_int(parsed[2])
-            d = str(parsed[3]).strip() if parsed[3] is not None else None
-            e = str(parsed[4]).strip() if parsed[4] is not None else ""
+            risks_rating = _to_int(parsed[0])
+            risks_types = str(parsed[1]).strip() if parsed[1] is not None else None
+            risks_just = str(parsed[2]).strip() if parsed[2] is not None else ""
+            rewards_rating = _to_int(parsed[3])
+            rewards_just = str(parsed[4]).strip() if parsed[4] is not None else ""
 
-            # Require the int fields to be parseable
-            if a is None or c is None:
+            # Require both ratings to parse as ints
+            if risks_rating is None or rewards_rating is None:
                 continue
 
-            return a, b, c, d, e
+            return risks_rating, risks_types, risks_just, rewards_rating, rewards_just
 
-    # fallback: no parseable 5-tuple found
-    return None, None, None, None, text
+    return None, None, text, None, ""
+
 
 
 def _atomic_write_csv(df: pd.DataFrame, path: str) -> None:
@@ -185,7 +191,7 @@ def build_prompt(row, model_name):
     }
 
     prefix = """
-For each task within different professions, determine the risks and rewards of using an LLM system (e.g., LLMs, LLM-based agents) in collaboration with a human expert to complete the task. For determination, use your knowledge of the current capabilities of the best performing LLM systems. First, determine whether the task is safety critical, i.e., any unintentional errors or exploitation of LLM capabilities by malicious actors can cause significant harm at individual, organizational, or societal level. If yes, then quantify the extent to which using LLMs in performing the task increases the risk compared to not using them. Take a balanced position, no need to be super alarmist or overly confident in the safety of current models. Consider if risks introduced due to LLM Systems can be easily caught or fixed by the human expert. With your risk assessment in mind, check if using LLM systems + expert can significantly decrease the cost or time of completing the task while keeping the same quality as an expert human.
+For each task within different occupations, determine the risks and rewards of using an LLM system (e.g., LLMs, LLM-based agents) in collaboration with a human expert to complete the task. For determination, use your knowledge of the current capabilities of the best performing LLM systems. First, determine whether the task is safety critical, i.e., any unintentional errors or exploitation of LLM capabilities by malicious actors can cause significant harm at individual, organizational, or societal level. If yes, then quantify the extent to which using LLM Systems in performing the task increases the risk compared to not using them. Take a balanced position, no need to be super alarmist or overly confident in the safety of current models. Consider if risks introduced due to LLM Systems can be easily caught or fixed by the human expert. With your risk assessment in mind, check if using the LLM systems + a human expert can significantly decrease the cost or time of completing the task while keeping the same quality as an expert human.
 
 Key vulnerabilities of LLM systems to consider include:
 - Discrimination: Unequal treatment of individuals or groups by LLM systems, often based on race, gender, or other sensitive characteristics, resulting in unfair outcomes and representation of those groups. Further, accuracy and effectiveness of LLM decisions and actions are dependent on group membership, where decisions in LLM system design and biased training data lead to
@@ -372,7 +378,7 @@ def evaluate_with_model(model_name, model_path, df):
 
             try:
                 generated_text = _call_model(prompt)
-                rr, rj, rir, rt, rij = parse_eval(generated_text)
+                rir, rt, rij, rr, rj = parse_risks_rewards(generated_text)
 
                 df.at[idx, col_rr] = rr
                 df.at[idx, col_rj] = rj
