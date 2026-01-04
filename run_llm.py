@@ -465,7 +465,7 @@ def generate_summary(row):
 # ----------------------------- MAIN -----------------------------
 def main():
     set_seed(28)
-    df = pd.read_excel("Task_Statements_Computer_Occupations.xlsx", engine="openpyxl", sheet_name="Test")
+    df = pd.read_excel("Task_Statements_Computer_Occupations.xlsx", engine="openpyxl", sheet_name="Computer Occupations")
     df.columns = df.columns.str.rstrip()
     print("column ", df.columns)
     if "Task ID" not in df.columns:
