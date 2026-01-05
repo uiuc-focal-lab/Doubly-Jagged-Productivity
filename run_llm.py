@@ -567,13 +567,13 @@ def main():
 
     models = [
         #("qwen_best", os.getenv("QWEN_MODEL_ID", "qwen.qwen3-next-80b-a3b")),
-        ("mistral_best", os.getenv("MISTRAL_MODEL_ID", "mistral.mistral-large-3-675b-instruct")),
+        #("mistral_best", os.getenv("MISTRAL_MODEL_ID", "mistral.mistral-large-3-675b-instruct")),
         # ("llama33_70b_bedrock", "us.meta.llama3-3-70b-instruct-v1:0"),
         # ("deepseek_r1_bedrock", "us.deepseek.r1-v1:0"),
         # ("llama", "meta-llama/Meta-Llama-3-8B-Instruct"),
         # ("mistral", "mistralai/Mistral-7B-Instruct-v0.3"),
         # ("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
-        # ("gemini", "gemini-3-pro-preview"),
+        ("gemini", "gemini-3-pro-preview"),
         # ("gpt5", "openai:gpt-5"),
     ]
 
