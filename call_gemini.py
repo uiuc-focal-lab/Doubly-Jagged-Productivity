@@ -37,6 +37,7 @@ def call_gemini_api(prompt: str, model: str, max_output_tokens: int = 2048,
                 text = "".join(p.get("text", "") for p in parts if isinstance(p, dict))
                 return text.strip()
             if r.status_code in (429, 500, 502, 503, 504):
+                print("Status", r.status_code)
                 time.sleep(backoff)
                 backoff = min(backoff * 2, 30)
                 continue

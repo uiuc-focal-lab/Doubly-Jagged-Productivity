@@ -17,6 +17,10 @@ from typing import Optional, Tuple, Any, Dict
 from call_claude import call_claude_bedrock
 from call_gemini import call_gemini_api
 from call_openai import call_openai_gpt
+# from call_deepseek_bedrock import call_deepseek_bedrock
+from call_llama_bedrock import call_llama_bedrock
+from call_qwen_bedrock import call_qwen_bedrock
+from call_mistral_bedrock import call_mistral_bedrock
 
 
 # ----------------------------- SETUP -----------------------------
@@ -42,7 +46,6 @@ client = boto3.client("bedrock-runtime", region_name="us-east-1")
 claude_opus = "us.anthropic.claude-opus-4-5-20251101-v1:0"
 
 
-
 def _extract_balanced_square_brackets(s: str) -> list[str]:
     out = []
     depth = 0
@@ -55,9 +58,10 @@ def _extract_balanced_square_brackets(s: str) -> list[str]:
         elif ch == ']' and depth > 0:
             depth -= 1
             if depth == 0 and start is not None:
-                out.append(s[start:i+1])
+                out.append(s[start:i + 1])
                 start = None
     return out
+
 
 def _to_int(x: Any) -> Optional[int]:
     try:
@@ -65,8 +69,9 @@ def _to_int(x: Any) -> Optional[int]:
     except Exception:
         return None
 
+
 def parse_risks_rewards(
-    generated_text: str
+        generated_text: str
 ) -> Tuple[Optional[int], Optional[str], str, Optional[int], str]:
     """
     Parse:
@@ -106,12 +111,19 @@ def parse_risks_rewards(
     return None, None, text, None, ""
 
 
-
 def _atomic_write_csv(df: pd.DataFrame, path: str) -> None:
     """Write CSV atomically to avoid corrupt checkpoints on crashes."""
     tmp = f"{path}.tmp"
     df.to_csv(tmp, index=False, encoding="utf-8")
     os.replace(tmp, path)
+
+
+def _append_jsonl(path: str, record: Dict[str, Any]) -> None:
+    """Append a single JSON record to a .jsonl file (one JSON object per line)."""
+    os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
+    with open(path, 'a', encoding='utf-8') as f:
+        f.write(json.dumps(record, ensure_ascii=False))
+        f.write('\n')
 
 
 def _load_model_checkpoint(checkpoint_path: str, model_name: str) -> Optional[pd.DataFrame]:
@@ -185,7 +197,7 @@ def build_prompt(row, model_name):
             "Profession: Pharmacists\nTask: Provide information and advice regarding drug interactions, side effects, dosage, and proper medication storage.\nExample Evaluation: [5, \"Misinformation, Privacy, Security, Malicious actors and Misuse, Discrimination\", \"The task is safety critical as incorrect interaction, dose, side-effect, or storage advice can cause serious harm. LLMs raise risks mainly via confident clinical errors or omissions, and automation bias. Most errors are catchable if a pharmacist verifies using authoritative drug databases or labeling and uses the patient profile, but subtle mistakes and outdated guidance can slip through causing substantial harm. Added concerns: PHI leakage if used outside compliant systems; prompt-injection or tool misuse in agentic setups; potential biased framing in counseling.\", 3, \"LLMs speed drafting of patient-facing counseling and structured checklists, but to keep expert-level quality you must verify nearly every clinical claim, which reduces net time savings; still worthwhile mainly for communication or formatting, not as a clinical source of truth.\"]",
             # "Profession: Software Quality Assurance Analysts and Testers\nTask: Perform initial debugging procedures by reviewing configuration files, logs, or code pieces to determine breakdown source.\nExample Evaluation: [4, \"LLM systems can dramatically speed up first-pass debugging by summarizing and correlating logs/configs, mapping errors to likely root causes, searching the codebase for relevant call paths or changes, and proposing next checks or minimal repro steps, turning hours of triage into minutes in many cases.\", 1, \"Robustness\", \"LLM-based code agents can significantly reduce the completion time by assisting in reviews and determining sources. Lack of robustness can sometimes cause critical issues in software to persist. However, the same is true for humans, so therefore the use of LLMs does not significantly increase risks\"]",
             "Profession: Human Resources Managers\nTask: Identify staff vacancies and recruit, interview, and select applicants.\nExample Evaluation: [3, \"Discrimination, Privacy, Security, Misinformation, Malicious actors and Misuse\", \"Its a critical task and hiring errors can cause serious individual harm and create legal or reputational risk. LLMs raise risk via biased screening or interview framing, mishandling applicant PII, incorrect compliance guidance, and misuse (AI-crafted resumes, deepfake interviews, or prompt-injected materials). Many issues are catchable with structured rubrics, audits, and keeping LLM output advisory, not decisive, but subtle bias or privacy failures can slip through.\", 3, \"Good efficiency for drafting JDs or outreach, candidate comms, interview guides or rubrics, and structured summaries; however, fairness or privacy controls and human review reduce the hands-off savings—still meaningful but not maximal.\"]"
-            #"Profession: Models\nTask: Pose for artists and photographers.\nExample Evaluation: [1, \"LLMs can help with planning (mood boards, pose lists, shot lists, direction cues, scheduling or coordination), but the core value—physically posing and performing on set—can’t be reduced much by an LLM system.\",0, \"No Risks\", \"The task is not safety critical. \"]",
+            # "Profession: Models\nTask: Pose for artists and photographers.\nExample Evaluation: [1, \"LLMs can help with planning (mood boards, pose lists, shot lists, direction cues, scheduling or coordination), but the core value—physically posing and performing on set—can’t be reduced much by an LLM system.\",0, \"No Risks\", \"The task is not safety critical. \"]",
             "Profession: Claims Adjusters, Examiners, and Investigators\nTask: Review police reports, medical treatment records, medical bills, or physical property damage to determine the extent of liability.\nExample Evaluation: [4, \"Misinformation, Privacy, Discrimination, Security, Malicious actors and Misuse\", \"The task is safety critical, wrong liability calls can seriously harm claimants or insurers and create legal or fraud exposure. LLMs raise risk by misreading or omitting evidence, hallucinating facts, making overconfident liability inferences, and introducing biased credibility judgments; sensitive medical or police data also heightens privacy or security risk, and fraudsters can tailor narratives to game the model. Humans can catch many issues if LLMs are limited to summarization or extraction and every claim is traced back to the record, but subtle distortions can slip through.\", 4, \"High reward: faster summarization of reports or bills, timeline and fact extraction, inconsistency flags, and draft claim notes, often cutting cycle time a lot while the adjuster verifies sources and decides liability.\"]",
         ],
     }
@@ -218,6 +230,7 @@ For each evaluation:
     task = f"Given the profession: {row['Title']}, and a specific task: '{row['Task']}', evaluate the risk of using an LLM system to perform the task."
     return f"{prefix}\n\n{examples_text}\n\n{task}"
 
+
 def _row_key_from_series(row) -> str:
     """Stable composite key for a task row used for resume/checkpointing.
     Keys on (SOC Code, Task ID).
@@ -241,13 +254,44 @@ def _row_key_from_series(row) -> str:
 
 # ----------------------------- INFERENCE + CHECKPOINT -----------------------------
 def is_bedrock_model(model_path: str) -> bool:
+    """Return True if model_path looks like a Bedrock model ID or inference-profile/ARN."""
     if not model_path:
         return False
-    return model_path.startswith("us.") or model_path.startswith("arn:aws:bedrock:")
+    return (
+            model_path.startswith("us.")  # predefined inference profiles (cross-region)
+            or model_path.startswith("arn:aws:bedrock:")  # model/inference-profile ARN
+            or model_path.startswith("meta.")  # Meta Llama IDs (e.g., meta.llama3-1-70b-instruct-v1:0)
+            or model_path.startswith("anthropic.")  # Claude model IDs on Bedrock
+            or model_path.startswith("amazon.")  # Nova, Titan, etc.
+            or model_path.startswith("cohere.")
+            or model_path.startswith("ai21.")
+            or model_path.startswith("mistral.")
+            or model_path.startswith("qwen.")  # Qwen model IDs on Bedrock
+            or model_path.startswith("deepseek.")  # DeepSeek model IDs on Bedrock
+    )
 
 
 def is_gemini_model(model_path: str) -> bool:
     return bool(model_path) and (model_path.startswith("gemini-") or model_path.startswith("models/gemini-"))
+
+
+def is_bedrock_llama_model(model_path: str) -> bool:
+    # Match raw model IDs (meta.llama...), predefined inference profiles (us.meta.llama...), and any ARN containing meta.llama
+    return bool(model_path) and ("meta.llama" in model_path)
+
+
+def is_bedrock_deepseek_model(model_path: str) -> bool:
+    return bool(model_path) and (".deepseek." in model_path or model_path.startswith("deepseek."))
+
+
+def is_bedrock_qwen_model(model_path: str) -> bool:
+    # Match raw Qwen IDs (qwen.*), inference profiles (us.qwen.*), and any ARN containing qwen.
+    return bool(model_path) and (".qwen." in model_path or model_path.startswith("qwen."))
+
+
+def is_bedrock_mistral_model(model_path: str) -> bool:
+    # Match raw Mistral IDs (mistral.*), inference profiles (us.mistral.*), and any ARN containing mistral.
+    return bool(model_path) and ("mistral." in model_path or ".mistral." in model_path)
 
 
 def is_openai_model(model_path: str) -> bool:
@@ -339,6 +383,54 @@ def evaluate_with_model(model_name, model_path, df):
 
     def _call_model(prompt: str) -> str:
         if is_bedrock_model(model_path):
+            # Bedrock hosts multiple providers. Route based on model ID prefix.
+            if is_bedrock_qwen_model(model_path):
+                return _call_with_retries(
+                    call_qwen_bedrock,
+                    prompt,
+                    model_id=model_path,
+                    region_name=os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or "us-east-1",
+                    max_tokens=int(os.getenv("QWEN_MAX_TOKENS", "2048")),
+                    temperature=float(os.getenv("QWEN_TEMPERATURE", "0")),
+                    top_p=float(os.getenv("QWEN_TOP_P", "0.9")),
+                    max_retries=max_retries,
+                )
+            if is_bedrock_deepseek_model(model_path):
+                return _call_with_retries(
+                    call_deepseek_bedrock,
+                    prompt,
+                    model_id=model_path,
+                    region_name=os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or "us-east-1",
+                    max_tokens=int(os.getenv("DEEPSEEK_MAX_TOKENS", "2048")),
+                    temperature=float(os.getenv("DEEPSEEK_TEMPERATURE", "0")),
+                    top_p=float(os.getenv("DEEPSEEK_TOP_P", "0.9")),
+                    max_retries=max_retries,
+                )
+            if is_bedrock_llama_model(model_path):
+                return _call_with_retries(
+                    call_llama_bedrock,
+                    prompt,
+                    model_id=model_path,
+                    region_name=os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or "us-east-1",
+                    max_tokens=int(os.getenv("LLAMA_MAX_TOKENS", "2048")),
+                    temperature=float(os.getenv("LLAMA_TEMPERATURE", "0")),
+                    top_p=float(os.getenv("LLAMA_TOP_P", "0.9")),
+                    max_retries=max_retries,
+                )
+
+            if is_bedrock_mistral_model(model_path):
+                return _call_with_retries(
+                    call_mistral_bedrock,
+                    prompt,
+                    model_id=model_path,
+                    region_name=os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or "us-east-1",
+                    max_tokens=int(os.getenv("MISTRAL_MAX_TOKENS", "2048")),
+                    temperature=float(os.getenv("MISTRAL_TEMPERATURE", "0")),
+                    top_p=float(os.getenv("MISTRAL_TOP_P", "0.9")),
+                    max_retries=max_retries,
+                )
+
+            # Fallback: keep existing Bedrock-Claude route (if you're using Bedrock for Claude too).
             return _call_with_retries(
                 call_claude_bedrock,
                 prompt,
@@ -347,6 +439,7 @@ def evaluate_with_model(model_name, model_path, df):
                 temperature=0,
                 max_retries=max_retries,
             )
+
         if is_gemini_model(model_path):
             return _call_with_retries(
                 call_gemini_api,
@@ -465,18 +558,23 @@ def generate_summary(row):
 # ----------------------------- MAIN -----------------------------
 def main():
     set_seed(28)
-    df = pd.read_excel("Task_Statements_Computer_Occupations.xlsx", engine="openpyxl", sheet_name="Computer Occupations")
+    df = pd.read_excel("Task_Statements_Computer_Occupations.xlsx", engine="openpyxl",
+                       sheet_name="Computer Occupations")
     df.columns = df.columns.str.rstrip()
     print("column ", df.columns)
     if "Task ID" not in df.columns:
         raise KeyError("🛑 'Task ID' column not found in the input Excel file.")
 
     models = [
+        #("qwen_best", os.getenv("QWEN_MODEL_ID", "qwen.qwen3-next-80b-a3b")),
+        ("mistral_best", os.getenv("MISTRAL_MODEL_ID", "mistral.mistral-large-3-675b-instruct")),
+        # ("llama33_70b_bedrock", "us.meta.llama3-3-70b-instruct-v1:0"),
+        # ("deepseek_r1_bedrock", "us.deepseek.r1-v1:0"),
         # ("llama", "meta-llama/Meta-Llama-3-8B-Instruct"),
         # ("mistral", "mistralai/Mistral-7B-Instruct-v0.3"),
-        ("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
+        # ("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
         # ("gemini", "gemini-3-pro-preview"),
-        #("gpt5", "openai:gpt-5"),
+        # ("gpt5", "openai:gpt-5"),
     ]
 
     for model_name, model_path in models:
@@ -517,4 +615,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
