@@ -192,7 +192,7 @@ def build_prompt(row, model_name):
     }
 
     prefix = """
-For each task within different occupations, determine the risks and rewards of using an LLM system (e.g., LLMs, LLM-based agents) in collaboration with a human expert to complete the task. For determination, use your knowledge of the current capabilities of the best performing LLM systems. First, determine whether the task is safety critical, i.e., any unintentional errors or exploitation of LLM capabilities by malicious actors can cause significant harm at individual, organizational, or societal level. If yes, then quantify the extent to which using LLM Systems in performing the task increases the risk compared to not using them. Take a balanced position, no need to be super alarmist or overly confident in the safety of current models. Consider if risks introduced due to LLM Systems can be easily caught or fixed by the human expert. Considering the cost of detecting and mitigating risks as well as the consequences of undetected risks, determine if using the LLM systems + a human expert can significantly decrease the cost or time of completing the task while keeping the same quality as an expert human.
+For each task within different occupations, determine the risks and rewards of using an LLM system (e.g., LLMs, LLM-based agents) in collaboration with a human expert to complete the task. For determination, use your knowledge of the current capabilities of the best performing LLM systems. First, determine whether the task is safety critical, i.e., any unintentional errors or exploitation of LLM capabilities by malicious actors can cause significant harm at individual, organizational, or societal level. If yes, then quantify the extent to which using LLM Systems by human experts in performing the task increases the risk compared to not using them. Take a balanced position, no need to be super alarmist or overly confident in the safety of current models. Consider if risks introduced due to LLM Systems can be easily caught or fixed by the human expert. Considering the cost of detecting and mitigating risks as well as the consequences of undetected risks, determine if using the LLM systems + a human expert can significantly decrease the cost or time of completing the task while keeping the same quality as an expert human.
 
 Key vulnerabilities of LLM systems to consider include:
 - Discrimination: Unequal treatment of individuals or groups by LLM systems, often based on race, gender, or other sensitive characteristics, resulting in unfair outcomes and representation of those groups. Further, accuracy and effectiveness of LLM decisions and actions are dependent on group membership, where decisions in LLM system design and biased training data lead to
@@ -493,8 +493,8 @@ def main():
         # ("llama", "meta-llama/Meta-Llama-3-8B-Instruct"),
         # ("mistral", "mistralai/Mistral-7B-Instruct-v0.3"),
         #("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
-        #("gemini", "gemini-3-pro-preview"),
-        ("grok_best_reasoning", os.getenv("GROK_MODEL_PATH", "xai:grok-4")),
+        ("gemini", "gemini-3-pro-preview"),
+        #("grok_best_reasoning", os.getenv("GROK_MODEL_PATH", "xai:grok-4")),
         #("gpt5", "openai:gpt-5"),
     ]
 
