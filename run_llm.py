@@ -444,43 +444,6 @@ def mode(row, colnames):
     return min(values) if len(set(values)) == 3 else pd.Series(values).mode().min()
 
 
-# ----------------------------- SUMMARIZATION -----------------------------
-def generate_summary(row):
-    user_message = f"""You are a text summarization model.
-        you will receive in input 3 differents text dealing with LLMs, image processing systems and robotics capabilities. 
-        Text 1: [{row['motivation_mistral']}] 
-        Text 2: [{row['motivation_openchat']}]
-        Text 3: [{row['motivation_llama']}]
-        You must summarize those 3 text in a unique one. 
-        You must provide the summary into square brackets.
-        You must return only the summary.
-        You cannot return other elements.
-        """
-
-    try:
-        response = requests.post(
-            url="https://openrouter.ai/api/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": "qwen/qwen-2.5-72b-instruct",
-                "messages": [{"role": "user", "content": user_message}],
-                "top_p": 1,
-                "temperature": 0
-            }
-        )
-        if response.status_code == 200:
-            content = response.json()['choices'][0]['message']['content']
-            match = re.findall(r'\[(.*?)\]', content)
-            return match[0] if match else content.strip()
-        else:
-            return None
-    except Exception as e:
-        return None
-
-
 # ----------------------------- MAIN -----------------------------
 def main():
     set_seed(28)
