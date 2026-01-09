@@ -325,8 +325,8 @@ def evaluate_with_model(model_name, model_path, df):
     save_every = int(os.getenv("SAVE_EVERY", "10"))
     max_retries = int(os.getenv("MAX_RETRIES", "5"))
 
-    checkpoint_path = f"{model_name}_partial.csv"
-    errors_path = f"{model_name}_errors.jsonl"
+    checkpoint_path = results/f"{model_name}_partial.csv"
+    errors_path = results/f"{model_name}_errors.jsonl"
 
     col_rr = f"{model_name}_rewards_ratings"
     col_rj = f"{model_name}_rewards_justifications"
