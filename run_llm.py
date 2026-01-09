@@ -246,14 +246,7 @@ def _row_key_from_series(row) -> str:
 def is_bedrock_model(model_path: str) -> bool:
     if not model_path:
         return False
-    return  model_path.startswith("us.")  # predefined inference profiles (cross-region)
-            or model_path.startswith("arn:aws:bedrock:")  # model/inference-profile ARN
-            or model_path.startswith("meta.")  # Meta Llama IDs (e.g., meta.llama3-1-70b-instruct-v1:0)
-            or model_path.startswith("anthropic.")  # Claude model IDs on Bedrock
-            or model_path.startswith("amazon.")  # Nova, Titan, etc.
-            or model_path.startswith("cohere.")
-            or model_path.startswith("ai21.")
-            or model_path.startswith("qwen.")  # Qwen model IDs on Bedrock
+    return  model_path.startswith("us.") or model_path.startswith("arn:aws:bedrock:")  or model_path.startswith("meta.")  or model_path.startswith("anthropic.")  or model_path.startswith("qwen.")
 
 
 def is_gemini_model(model_path: str) -> bool:
@@ -324,9 +317,11 @@ def evaluate_with_model(model_name, model_path, df):
 
     save_every = int(os.getenv("SAVE_EVERY", "10"))
     max_retries = int(os.getenv("MAX_RETRIES", "5"))
+    resultdir = "results"
+    os.makedirs(resultdir, exist_ok=True)
 
-    checkpoint_path = results/f"{model_name}_partial.csv"
-    errors_path = results/f"{model_name}_errors.jsonl"
+    checkpoint_path = os.path.join(resultdir, f"{model_name}_partial.csv")
+    errors_path = os.path.join(resultdir, f"{model_name}_errors.jsonl")
 
     col_rr = f"{model_name}_rewards_ratings"
     col_rj = f"{model_name}_rewards_justifications"
@@ -490,10 +485,10 @@ def main():
         raise KeyError("🛑 'Task ID' column not found in the input Excel file.")
 
     models = [
-        #("qwen_best", os.getenv("QWEN_MODEL_ID", "qwen.qwen3-next-80b-a3b")),
+        ("qwen_best", os.getenv("QWEN_MODEL_ID", "qwen.qwen3-next-80b-a3b")),
         # ("llama33_70b_bedrock", "us.meta.llama3-3-70b-instruct-v1:0"),
         #("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
-        ("gemini", "gemini-3-pro-preview"),
+        #("gemini", "gemini-3-pro-preview"),
         #("grok_best_reasoning", os.getenv("GROK_MODEL_PATH", "xai:grok-4")),
         #("gpt5", "openai:gpt-5"),
     ]
