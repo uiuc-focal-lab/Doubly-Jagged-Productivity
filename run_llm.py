@@ -455,7 +455,6 @@ def main():
 
     models = [
         # ("llama", "meta-llama/Meta-Llama-3-8B-Instruct"),
-        # ("mistral", "mistralai/Mistral-7B-Instruct-v0.3"),
         #("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
         ("gemini", "gemini-3-pro-preview"),
         #("grok_best_reasoning", os.getenv("GROK_MODEL_PATH", "xai:grok-4")),
@@ -466,36 +465,6 @@ def main():
         df = evaluate_with_model(model_name, model_path, df)
         _atomic_write_csv(df, f"{model_name}_partial.csv")
         print(f"✅ Wrote combined output")
-
-    # rating_cols = [f"{name}_ratings" for name, _ in models]
-    # df["TEAI_rating"] = df.apply(lambda row: mode(row, rating_cols), axis=1)
-
-    # summary_path = "TEAI_result.xlsx"
-    # if os.path.exists(summary_path):
-    #    print("🔁 Resuming summarization from:", summary_path)
-    #    df_existing = pd.read_excel(summary_path, engine="openpyxl")
-    #    if "teai_summary" in df_existing.columns:
-    #        df = df.merge(df_existing[["Task ID", "teai_summary"]], on="Task ID", how="left")
-
-    # failures = []
-
-    # for task_id, row in tqdm(df[df["teai_summary"].isna()].set_index("Task ID").iterrows(), desc="Summarization"):
-    #    summary = generate_summary(row)
-    #    if summary:
-    #        df.loc[df["Task ID"] == task_id, "teai_summary"] = summary
-    #    else:
-    #        failures.append(task_id)
-    #    if len(failures) % 20 == 0:
-    #        df.to_excel(summary_path, index=False, engine="openpyxl")
-
-    # df.to_excel(summary_path, index=False, engine="openpyxl")
-    # print("✅ All results saved to", summary_path)
-
-    # if failures:
-    #    with open("teai_failed.log", "w") as f:
-    #        for task_id in failures:
-    #            f.write(f"{task_id}\n")
-    #    print(f"⚠️ Logged {len(failures)} failed tasks in teai_failed.log")
 
 
 if __name__ == "__main__":
