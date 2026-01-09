@@ -490,7 +490,8 @@ def main():
         raise KeyError("🛑 'Task ID' column not found in the input Excel file.")
 
     models = [
-        # ("llama", "meta-llama/Meta-Llama-3-8B-Instruct"),
+        #("qwen_best", os.getenv("QWEN_MODEL_ID", "qwen.qwen3-next-80b-a3b")),
+        # ("llama33_70b_bedrock", "us.meta.llama3-3-70b-instruct-v1:0"),
         #("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
         ("gemini", "gemini-3-pro-preview"),
         #("grok_best_reasoning", os.getenv("GROK_MODEL_PATH", "xai:grok-4")),
