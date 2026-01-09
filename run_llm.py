@@ -13,11 +13,12 @@ from dotenv import load_dotenv
 import ast
 import json
 from typing import Optional, Tuple, Any, Dict
-# from vllm import LLM, SamplingParams
 from call_claude import call_claude_bedrock
 from call_gemini import call_gemini_api
 from call_openai import call_openai_gpt
 from call_grok_xai import call_grok_api
+from call_llama_bedrock import call_llama_bedrock
+from call_qwen_bedrock import call_qwen_bedrock
 
 
 # ----------------------------- SETUP -----------------------------
@@ -245,7 +246,14 @@ def _row_key_from_series(row) -> str:
 def is_bedrock_model(model_path: str) -> bool:
     if not model_path:
         return False
-    return model_path.startswith("us.") or model_path.startswith("arn:aws:bedrock:")
+    return  model_path.startswith("us.")  # predefined inference profiles (cross-region)
+            or model_path.startswith("arn:aws:bedrock:")  # model/inference-profile ARN
+            or model_path.startswith("meta.")  # Meta Llama IDs (e.g., meta.llama3-1-70b-instruct-v1:0)
+            or model_path.startswith("anthropic.")  # Claude model IDs on Bedrock
+            or model_path.startswith("amazon.")  # Nova, Titan, etc.
+            or model_path.startswith("cohere.")
+            or model_path.startswith("ai21.")
+            or model_path.startswith("qwen.")  # Qwen model IDs on Bedrock
 
 
 def is_gemini_model(model_path: str) -> bool:
@@ -259,6 +267,16 @@ def is_openai_model(model_path: str) -> bool:
 def is_xai_model(model_path: str) -> bool:
     """xAI / Grok via xAI API. Use model_path like 'xai:grok-4'."""
     return bool(model_path) and model_path.startswith("xai:")
+
+def is_bedrock_llama_model(model_path: str) -> bool:
+    # Match raw model IDs (meta.llama...), predefined inference profiles (us.meta.llama...), and any ARN containing meta.llama
+    return bool(model_path) and ("meta.llama" in model_path)
+
+
+def is_bedrock_qwen_model(model_path: str) -> bool:
+    # Match raw Qwen IDs (qwen.*), inference profiles (us.qwen.*), and any ARN containing qwen.
+    return bool(model_path) and (".qwen." in model_path or model_path.startswith("qwen."))
+
 
 
 def _atomic_write_csv(df: pd.DataFrame, path: str) -> None:
@@ -346,6 +364,26 @@ def evaluate_with_model(model_name, model_path, df):
 
     def _call_model(prompt: str) -> str:
         if is_bedrock_model(model_path):
+            if is_bedrock_qwen_model(model_path):
+                return _call_with_retries(
+                    call_qwen_bedrock,
+                    prompt,
+                    model_id=model_path,
+                    region_name=os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or "us-east-1",
+                    max_tokens=int(os.getenv("QWEN_MAX_TOKENS", "2048")),
+                    temperature=float(os.getenv("QWEN_TEMPERATURE", "0")),
+                    max_retries=max_retries,
+                )
+            if is_bedrock_llama_model(model_path):
+                return _call_with_retries(
+                    call_llama_bedrock,
+                    prompt,
+                    model_id=model_path,
+                    region_name=os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or "us-east-1",
+                    max_tokens=int(os.getenv("LLAMA_MAX_TOKENS", "2048")),
+                    temperature=float(os.getenv("LLAMA_TEMPERATURE", "0")),
+                    max_retries=max_retries,
+                )
             return _call_with_retries(
                 call_claude_bedrock,
                 prompt,
@@ -361,7 +399,6 @@ def evaluate_with_model(model_name, model_path, df):
                 model_path.replace("https://generativelanguage.googleapis.com/v1beta/models/", ""),
                 max_output_tokens=2048,
                 temperature=0,
-                top_p=0.95,
                 max_retries=max_retries,
             )
         if is_openai_model(model_path):
@@ -382,7 +419,6 @@ def evaluate_with_model(model_name, model_path, df):
                 grok_model,
                 max_output_tokens=int(os.getenv("GROK_MAX_TOKENS", "2048")),
                 temperature=float(os.getenv("GROK_TEMPERATURE", "0")),
-                top_p=float(os.getenv("GROK_TOP_P", "1")),
                 max_retries=max_retries,
             )
         raise ValueError(f"Unknown model_path format for {model_name}: {model_path}")
