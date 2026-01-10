@@ -66,7 +66,7 @@ def call_gemini_api(
 
             # If the prompt got blocked, candidates may be missing
             pf = data.get("promptFeedback") or {}
-            print("prompt feedback", pf, data)
+            #print("prompt feedback", pf, data)
             if pf.get("blockReason"):
                 raise RuntimeError(f"Gemini prompt blocked: {pf.get('blockReason')} | {pf}")
 
