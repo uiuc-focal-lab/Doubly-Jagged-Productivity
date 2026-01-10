@@ -62,6 +62,7 @@ def call_qwen_bedrock(
         kwargs["system"] = [{"text": system_prompt}]
 
     try:
+        #print("inference CFG",inference_cfg)
         resp = client.converse(**kwargs)
     except ClientError as e:
         raise RuntimeError(f"Bedrock Qwen call failed (modelId={model_id}, region={region_name}): {e}") from e

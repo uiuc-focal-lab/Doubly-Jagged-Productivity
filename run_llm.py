@@ -486,9 +486,9 @@ def main():
 
     models = [
         #("qwen_best", os.getenv("QWEN_MODEL_ID", "qwen.qwen3-next-80b-a3b")),
-        ("llama33_70b_bedrock", "us.meta.llama3-3-70b-instruct-v1:0"),
+        #("llama33_70b_bedrock", "us.meta.llama3-3-70b-instruct-v1:0"),
         #("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
-        #("gemini25_pro", "gemini-2.5-pro"),
+        ("gemini25_pro", "gemini-2.5-pro"),
         #("grok_best_reasoning", os.getenv("GROK_MODEL_PATH", "xai:grok-4")),
         #("gpt5", "openai:gpt-5"),
     ]
