@@ -1,0 +1,35 @@
+
+Occupation-level mean and standard deviation across models:
+                                                    soc_name  reward_mean  reward_std  risk_mean  risk_std 
+			      Information Security Engineers     3.456267    0.357687   4.156367  0.506693
+			       Information Security Analysts     3.244550    0.467619   4.046967  0.595821  
+					 Penetration Testers	 3.556401    0.267911	3.851663  0.613444
+				   Digital Forensic Analysts     2.696544    0.385759   3.778630  0.728642
+				        Blockchain Engineers	 3.452575    0.374696	3.608562  0.683228
+
+			      Health Informatics Specialists     3.706367    0.236660   3.582400  0.486058
+		       Computer Systems Engineers/Architects     3.868467    0.194037   3.376883  0.612024
+		 Network and Computer Systems Administrators     3.613233    0.316505   3.344883  0.779782 
+
+                        	     Database Administrators     3.730417    0.156556   3.218600  0.584700          
+				 Computer Network Architects     3.759983    0.219543   3.103383  0.698882
+				   Computer Systems Analysts     3.944983    0.120995   3.056667  0.677909 
+				        Computer Programmers     4.132300    0.339997   3.025267  0.556236  
+                        Computer Network Support Specialists     3.610100    0.277000   3.009933  0.740912   
+                                           
+                                         Software Developers     3.887500    0.280116   2.992667  0.703242
+					  Web Administrators     3.810383    0.127222   2.875283  0.566019    
+                Computer and Information Research Scientists     3.793417    0.387999   2.872000  0.749940 
+		  Telecommunications Engineering Specialists     3.640200    0.240015   2.869450  0.715923
+				Data Warehousing Specialists     3.998050    0.088602   2.844467  0.726186 
+	     Software Quality Assurance Analysts and Testers     3.943400    0.094744   2.804267  0.518885 
+					 Database Architects     3.946633    0.089681   2.767550  0.649241
+			     Document Management Specialists     3.738283    0.148435   2.693283  0.679082
+		     Information Technology Project Managers     3.932783    0.132427   2.659400  0.485649   
+			   Computer User Support Specialists     3.813417    0.202096   2.562017  0.741368  
+                                  	      Web Developers     3.942517    0.223270   2.548050  0.742267  
+Geographic Information Systems Technologists and Technicians     3.695267    0.321887   2.543917  0.820745   
+                         Web and Digital Interface Designers	 3.952857    0.138238   2.292215  0.640344
+                                        Video Game Designers     3.911550    0.162828   1.499867  0.718193   
+                                           
+                                               

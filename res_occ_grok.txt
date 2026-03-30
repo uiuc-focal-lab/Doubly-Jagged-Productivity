@@ -1,0 +1,32 @@
+Processed: Computer Systems Analysts | reward=4.0768, risk=2.8269, gain=1.2499, tasks=22
+Processed: Health Informatics Specialists | reward=3.9224, risk=3.5946, gain=0.3279, tasks=17
+Processed: Information Security Analysts | reward=3.7923, risk=3.7731, gain=0.0192, tasks=11
+Processed: Computer and Information Research Scientists | reward=4.0000, risk=2.5548, gain=1.4452, tasks=15
+Processed: Computer Network Support Specialists | reward=3.8816, risk=2.8056, gain=1.0761, tasks=26
+Processed: Computer User Support Specialists | reward=3.9011, risk=2.2300, gain=1.6710, tasks=16
+Processed: Computer Network Architects | reward=3.9822, risk=3.0099, gain=0.9722, tasks=33
+Processed: Telecommunications Engineering Specialists | reward=3.9313, risk=2.9841, gain=0.9471, tasks=26
+Processed: Database Administrators | reward=3.9108, risk=3.0722, gain=0.8387, tasks=18
+Processed: Database Architects | reward=4.0391, risk=2.7137, gain=1.3254, tasks=25
+Processed: Data Warehousing Specialists | reward=4.1565, risk=2.7817, gain=1.3748, tasks=18
+Processed: Network and Computer Systems Administrators | reward=3.8521, risk=3.1710, gain=0.6811, tasks=20
+Processed: Computer Programmers | reward=4.6140, risk=2.4371, gain=2.1769, tasks=17
+Processed: Software Developers | reward=4.1819, risk=2.3449, gain=1.8370, tasks=17
+Processed: Software Quality Assurance Analysts and Testers | reward=4.0000, risk=2.6443, gain=1.3557, tasks=27
+Processed: Web Developers | reward=4.1125, risk=1.8889, gain=2.2236, tasks=27
+Skipping: Web and Digital Interface Designers | SOC name 'Web and Digital Interface Designers' not found in Task Ratings file.
+Processed: Video Game Designers | reward=3.9331, risk=0.3221, gain=3.6110, tasks=24
+Processed: Web Administrators | reward=3.9618, risk=2.3905, gain=1.5713, tasks=35
+Processed: Geographic Information Systems Technologists and Technicians | reward=3.9034, risk=2.7838, gain=1.1197, tasks=26
+Processed: Document Management Specialists | reward=3.9061, risk=2.3421, gain=1.5640, tasks=23
+Skipping: Penetration Testers | SOC name 'Penetration Testers' not found in Task Ratings file.
+Processed: Information Security Engineers | reward=4.0000, risk=3.8614, gain=0.1386, tasks=20
+Skipping: Digital Forensics Analysts | SOC name 'Digital Forensics Analysts' not found in Task Ratings file.
+Skipping: Blockchain Engineers | SOC name 'Blockchain Engineers' not found in Task Ratings file.
+Processed: Computer Systems Engineers/Architects | reward=4.0309, risk=3.2550, gain=0.7758, tasks=28
+Processed: Information Technology Project Managers | reward=4.0000, risk=2.6999, gain=1.3001, tasks=21
+
+Saved successful results to occupation_ratings.csv
+Saved skipped SOCs to occupation_ratings_missing_or_failed.csv
+
+Done.
