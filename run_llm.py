@@ -19,6 +19,8 @@ from call_openai import call_openai_gpt
 from call_grok_xai import call_grok_api
 from call_llama_bedrock import call_llama_bedrock
 from call_qwen_bedrock import call_qwen_bedrock
+from call_deepseek_bedrock import call_deepseek_bedrock
+from call_mistral_bedrock import call_mistral_bedrock
 
 
 # ----------------------------- SETUP -----------------------------
@@ -246,7 +248,16 @@ def _row_key_from_series(row) -> str:
 def is_bedrock_model(model_path: str) -> bool:
     if not model_path:
         return False
-    return  model_path.startswith("us.") or model_path.startswith("arn:aws:bedrock:")  or model_path.startswith("meta.")  or model_path.startswith("anthropic.")  or model_path.startswith("qwen.")
+
+    return (
+        model_path.startswith("us.")
+        or model_path.startswith("arn:aws:bedrock:")
+        or model_path.startswith("meta.")
+        or model_path.startswith("anthropic.")
+        or model_path.startswith("qwen.")
+        or model_path.startswith("mistral.")
+        or model_path.startswith("deepseek.")
+    )
 
 
 def is_gemini_model(model_path: str) -> bool:
@@ -265,6 +276,22 @@ def is_bedrock_llama_model(model_path: str) -> bool:
     # Match raw model IDs (meta.llama...), predefined inference profiles (us.meta.llama...), and any ARN containing meta.llama
     return bool(model_path) and ("meta.llama" in model_path)
 
+def is_bedrock_deepseek_model(model_path: str) -> bool:
+    return bool(model_path) and (
+        model_path.startswith("deepseek.")
+        or model_path.startswith("us.deepseek.")
+    )
+
+def is_bedrock_mistral_model(model_path: str) -> bool:
+    """Match raw Mistral IDs, inference profiles, and Mistral ARNs."""
+    return bool(model_path) and (
+        model_path.startswith("mistral.")
+        or ".mistral." in model_path
+        or (
+            model_path.startswith("arn:aws:bedrock:")
+            and "mistral." in model_path
+        )
+    )
 
 def is_bedrock_qwen_model(model_path: str) -> bool:
     # Match raw Qwen IDs (qwen.*), inference profiles (us.qwen.*), and any ARN containing qwen.
@@ -379,6 +406,18 @@ def evaluate_with_model(model_name, model_path, df):
                     temperature=float(os.getenv("LLAMA_TEMPERATURE", "0")),
                     max_retries=max_retries,
                 )
+            if is_bedrock_mistral_model(model_path):
+                return _call_with_retries(call_mistral_bedrock,prompt,model_id=model_path,region_name=(os.getenv("AWS_REGION")or os.getenv("AWS_DEFAULT_REGION")or "us-east-1"),
+                    max_tokens=int(os.getenv("MISTRAL_MAX_TOKENS", "2048")),
+                    temperature=float(os.getenv("MISTRAL_TEMPERATURE", "0")),
+                    top_p=float(os.getenv("MISTRAL_TOP_P", "0.9")),
+                    max_retries=max_retries,)
+            if is_bedrock_deepseek_model(model_path):
+                return _call_with_retries(call_deepseek_bedrock,prompt,model_id=model_path,region_name=(os.getenv("AWS_REGION")or os.getenv("AWS_DEFAULT_REGION")or "us-east-1"),
+                    max_tokens=int(os.getenv("DEEPSEEK_MAX_TOKENS", "2048")),
+                    temperature=float(os.getenv("DEEPSEEK_TEMPERATURE", "0")),
+                    top_p=float(os.getenv("DEEPSEEK_TOP_P", "0.9")),
+                    max_retries=max_retries,)
             return _call_with_retries(
                 call_claude_bedrock,
                 prompt,
@@ -488,8 +527,10 @@ def main():
         #("qwen_best", os.getenv("QWEN_MODEL_ID", "qwen.qwen3-next-80b-a3b")),
         #("llama33_70b_bedrock", "us.meta.llama3-3-70b-instruct-v1:0"),
         #("claude_opus45", "us.anthropic.claude-opus-4-5-20251101-v1:0"),
-        ("gemini25_pro", "gemini-2.5-pro"),
+        #("gemini25_pro", "gemini-2.5-pro"),
         #("grok_best_reasoning", os.getenv("GROK_MODEL_PATH", "xai:grok-4")),
+        #("mistral_large",os.getenv("MISTRAL_MODEL_ID","mistral.mistral-large-2407-v1:0",),
+         ("deepseek_v32", "deepseek.v3.2"),
         #("gpt5", "openai:gpt-5"),
     ]
 

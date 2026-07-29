@@ -137,7 +137,7 @@ class OccupationRatings:
         task_values = self.onet.get_soc_task_values(
             soc_name, exact_match=exact_match
         ).copy()
-
+        print("task values ", task_values)
         task_values["raw_weight"] = (
             task_values["importance_norm"]
             * task_values["relevance_norm"]
@@ -153,7 +153,7 @@ class OccupationRatings:
             )
 
         task_values["norm_weight"] = task_values["raw_weight"] / task_values["raw_weight"].sum()
-
+        print("Weights", task_values["norm_weight"])
         if exact_match:
             combined_soc = self.combined[self.combined["Title"] == soc_name].copy()
         else:
