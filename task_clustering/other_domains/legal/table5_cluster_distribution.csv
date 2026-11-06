@@ -1,0 +1,10 @@
+Risk_Level,Reward_Level,N,Distribution
+Low,Low,1,C0 (100.0%)
+Low,Medium,3,"C0 (66.7%), C2 (33.3%)"
+Low,High,3,"C0 (66.7%), C1 (33.3%)"
+Medium,Low,1,C0 (100.0%)
+Medium,Medium,51,"C0 (37.3%), C2 (23.5%), C1 (19.6%), C3 (19.6%)"
+Medium,High,9,"C2 (55.6%), C1 (22.2%), C0 (22.2%)"
+High,Low,21,"C0 (66.7%), C1 (23.8%), C3 (9.5%)"
+High,Medium,32,"C3 (28.1%), C1 (28.1%), C0 (28.1%), C2 (15.6%)"
+High,High,2,"C0 (50.0%), C2 (50.0%)"

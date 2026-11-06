@@ -7,7 +7,7 @@ cluster the model sees all of the cluster's tasks, its most common occupations,
 and a few example tasks from each of the other clusters, so that the label
 describes what sets the cluster apart. The final labels are listed below.
 
-To repeat the drafting step (needs `pip install openai` and an OPENAI_API_KEY):
+To repeat the drafting step (needs an OPENAI_API_KEY):
 
     python label_clusters.py --draft [--model MODEL]
 
@@ -49,7 +49,7 @@ CLUSTER_LABELS = {
     20: "Maintaining, repairing, and upgrading computer hardware, software, and systems",
 }
 
-INSTRUCTIONS = """You are labeling clusters of work tasks from O*NET computer occupations. The tasks were \
+INSTRUCTIONS = """You are labeling clusters of work tasks from O*NET {domain} occupations. The tasks were \
 grouped by the similarity of their descriptions.
 
 Write a label for the target cluster that:
@@ -59,7 +59,7 @@ Write a label for the target cluster that:
   for example "Scheduling patient appointments and maintaining medical records",
 - avoids filler such as "tasks", "focus on", "various" or "related to".
 
-Respond in JSON: {"label": "..."}"""
+Respond in JSON: {{"label": "..."}}"""
 
 
 def describe(tasks, n=None, seed=0):
@@ -67,12 +67,12 @@ def describe(tasks, n=None, seed=0):
     return "\n".join(f"- {t}" for t in sample)
 
 
-def draft_label(client, model, cluster, tasks):
+def draft_label(client, model, cluster, tasks, domain):
     target = tasks[tasks.Cluster == cluster]
     others = "\n\n".join(f"Cluster {c}:\n{describe(group, EXAMPLES_PER_OTHER_CLUSTER, seed=c)}"
                          for c, group in tasks[tasks.Cluster != cluster].groupby("Cluster"))
     occupations = "\n".join(f"- {p}: {n}" for p, n in target.Profession.value_counts().head(5).items())
-    prompt = (f"{INSTRUCTIONS}\n\nTARGET CLUSTER ({len(target)} tasks)\n\nTasks:\n{describe(target)}\n\n"
+    prompt = (f"{INSTRUCTIONS.format(domain=domain)}\n\nTARGET CLUSTER ({len(target)} tasks)\n\nTasks:\n{describe(target)}\n\n"
               f"Most common occupations:\n{occupations}\n\nOTHER CLUSTERS (example tasks)\n\n{others}")
     response = client.chat.completions.create(
         model=model, response_format={"type": "json_object"},
@@ -81,12 +81,12 @@ def draft_label(client, model, cluster, tasks):
     return json.loads(response.choices[0].message.content)["label"]
 
 
-def draft_labels(tasks, model=MODEL):
+def draft_labels(tasks, model=MODEL, domain="computer"):
     """Draft a label for every cluster in `tasks` with an LLM. Returns {cluster: label}."""
     from openai import OpenAI
 
     client = OpenAI()
-    return {c: draft_label(client, model, c, tasks) for c in sorted(tasks.Cluster.unique())}
+    return {c: draft_label(client, model, c, tasks, domain) for c in sorted(tasks.Cluster.unique())}
 
 
 def main(labels=CLUSTER_LABELS, out_dir=OUTPUT_DIR):

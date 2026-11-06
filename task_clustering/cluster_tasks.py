@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Semantic clustering of the 609 task descriptions.
+Semantic clustering of the task descriptions (the 609 computer-occupation tasks
+in the paper).
 
   1. Embed each task description with all-MiniLM-L6-v2 (384 dimensions).
      Some occupations share identical task descriptions; each distinct
@@ -11,8 +12,10 @@ Semantic clustering of the 609 task descriptions.
   4. Assign the points HDBSCAN marks as outliers to the majority cluster of
      their 5 nearest clustered neighbours.
 
-HDBSCAN numbers clusters in an arbitrary order, so each cluster is given the ID
-of the paper cluster it shares the most tasks with.
+HDBSCAN numbers clusters in an arbitrary order. For the computer occupations,
+each cluster is given the ID of the paper cluster it shares the most tasks with,
+so that the IDs match the paper. Clusters of the other domains are numbered from
+largest to smallest.
 
 The clustering reported in the paper (seed 53) is saved in
 data/clustering_results.csv. Running this script writes a fresh copy to
@@ -43,6 +46,7 @@ SEED = 53
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 EMBEDDING_REVISION = "1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
 UMAP_PARAMS = dict(n_neighbors=15, min_dist=0.0, metric="cosine")
+MIN_CLUSTER_SIZE = 10  # larger values give fewer, broader clusters
 
 
 def embed_tasks(tasks):
@@ -52,13 +56,14 @@ def embed_tasks(tasks):
     return model.encode(list(texts), batch_size=32), index
 
 
-def cluster(embeddings, seed=SEED):
+def cluster(embeddings, seed=SEED, min_cluster_size=MIN_CLUSTER_SIZE):
     """Return the cluster of each embedding and the fraction HDBSCAN marked as outliers."""
     reduced = UMAP(n_components=5, random_state=seed, **UMAP_PARAMS).fit_transform(embeddings)
-    labels = HDBSCAN(min_cluster_size=10, min_samples=3).fit_predict(reduced)
+    labels = HDBSCAN(min_cluster_size=min_cluster_size, min_samples=3).fit_predict(reduced)
     outliers = labels == -1
-    knn = KNeighborsClassifier(n_neighbors=5).fit(reduced[~outliers], labels[~outliers])
-    labels[outliers] = knn.predict(reduced[outliers])
+    if outliers.any():
+        knn = KNeighborsClassifier(n_neighbors=5).fit(reduced[~outliers], labels[~outliers])
+        labels[outliers] = knn.predict(reduced[outliers])
     return labels, outliers.mean()
 
 
@@ -80,19 +85,27 @@ def number_like_paper(labels, task_ids):
     return np.array([ids[c] for c in labels])
 
 
-def cluster_all_tasks(seed=SEED):
-    """Cluster all tasks and number the clusters as in the paper."""
-    tasks = load_tasks()
+def number_by_size(labels):
+    """Number the clusters from the largest (0) to the smallest."""
+    sizes = pd.Series(labels).value_counts()
+    ids = {c: i for i, c in enumerate(sorted(sizes.index, key=lambda c: (-sizes[c], c)))}
+    return np.array([ids[c] for c in labels])
+
+
+def cluster_all_tasks(seed=SEED, domain="computer", min_cluster_size=MIN_CLUSTER_SIZE):
+    """Cluster all tasks of a domain; the computer occupations are numbered as in the paper."""
+    tasks = load_tasks(domain)
     embeddings, index = embed_tasks(tasks)
-    labels, outlier_fraction = cluster(embeddings, seed)
-    tasks["Cluster"] = number_like_paper(labels[index], tasks.Task_ID)
-    print(f"Seed {seed}: {tasks.Cluster.nunique()} clusters; {outlier_fraction:.1%} of the {len(embeddings)} "
-          f"distinct descriptions were HDBSCAN outliers and were reassigned")
+    labels, outlier_fraction = cluster(embeddings, seed, min_cluster_size)
+    labels = labels[index]
+    tasks["Cluster"] = number_like_paper(labels, tasks.Task_ID) if domain == "computer" else number_by_size(labels)
+    print(f"{len(tasks)} {domain} tasks, seed {seed}: {tasks.Cluster.nunique()} clusters; {outlier_fraction:.1%} of "
+          f"the {len(embeddings)} distinct descriptions were HDBSCAN outliers and were reassigned")
     return tasks
 
 
-def main(seed=SEED, out_dir=OUTPUT_DIR):
-    tasks = cluster_all_tasks(seed)
+def main(seed=SEED, out_dir=OUTPUT_DIR, domain="computer", min_cluster_size=MIN_CLUSTER_SIZE):
+    tasks = cluster_all_tasks(seed, domain, min_cluster_size)
     save(tasks[["Task_ID", "Profession", "Task", "Cluster"]], out_dir, "clustering_results.csv")
     return tasks
 
