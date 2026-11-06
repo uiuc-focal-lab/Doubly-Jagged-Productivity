@@ -62,8 +62,8 @@ python run_all.py --from-scratch --domain legal        # 123 tasks, 7 occupation
 python run_all.py --from-scratch --domain healthcare   # 2,064 tasks, 108 occupations
 ```
 
-Their ratings are in `results_legal/` and `results_healthcare/` at the top of the repository, and
-the output goes to `outputs/from_scratch/<domain>/`. These clusters have no counterpart in the
+Their ratings are in `results/Combined Ratings Legal.xlsx` and
+`results/Combined Ratings Healthcare.xlsx`, and the output goes to `outputs/from_scratch/<domain>/`. These clusters have no counterpart in the
 paper, so they are numbered from largest (C0) to smallest.
 
 The healthcare set is more than three times the size of the computer set, so the default

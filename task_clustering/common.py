@@ -9,13 +9,14 @@ ROOT = Path(__file__).resolve().parent
 OUTPUT_DIR = ROOT / "outputs"
 CLUSTERING = ROOT / "data" / "clustering_results.csv"
 
-# Folder with each domain's LLM ratings. The paper analyses the computer occupations.
+RESULTS_DIR = ROOT.parent / "results"
+
+# File with each domain's LLM ratings. The paper analyses the computer occupations.
 DOMAINS = {
-    "computer": ROOT.parent / "results",
-    "legal": ROOT.parent / "results_legal",
-    "healthcare": ROOT.parent / "results_healthcare",
+    "computer": RESULTS_DIR / "Combined Ratings.xlsx",
+    "legal": RESULTS_DIR / "Combined Ratings Legal.xlsx",
+    "healthcare": RESULTS_DIR / "Combined Ratings Healthcare.xlsx",
 }
-RESULTS_DIR = DOMAINS["computer"]
 
 MODELS = ["claude_opus45", "gemini25_pro", "gpt5", "grok_best_reasoning", "llama33_70b_bedrock", "qwen_best"]
 LEVELS = ["Low", "Medium", "High"]
@@ -44,7 +45,7 @@ def level(rating):
 def load_tasks(domain="computer"):
     """The domain's tasks (609 for the computer occupations) with their mean risk and
     reward over the six LLMs, sorted by Task_ID."""
-    df = pd.read_excel(DOMAINS[domain] / "Combined Ratings.xlsx", sheet_name="Combined")
+    df = pd.read_excel(DOMAINS[domain], sheet_name="Combined")
     df.columns = df.columns.astype(str).str.strip()
     df = df[pd.to_numeric(df["Task ID"], errors="coerce").notna()]  # drop the summary table below the data
     df = df.rename(columns={"Task ID": "Task_ID", "Title": "Profession",
