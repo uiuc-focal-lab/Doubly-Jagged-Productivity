@@ -1,0 +1,124 @@
+Task_ID,Profession,Task,Cluster
+1636,Paralegals and Legal Assistants,"Gather and analyze research data, such as statutes, decisions, and legal articles, codes, and documents.",1
+1638,Paralegals and Legal Assistants,Call upon witnesses to testify at hearings.,1
+1639,Paralegals and Legal Assistants,"Direct and coordinate law office activity, including delivery of subpoenas.",1
+1641,Paralegals and Legal Assistants,Keep and monitor legal volumes to ensure that the law library is up-to-date.,0
+1642,Paralegals and Legal Assistants,Appraise and inventory real and personal property for estate planning.,2
+3773,Lawyers,"Advise clients concerning business transactions, claim liability, advisability of prosecuting or defending lawsuits, or legal rights and obligations.",3
+3774,Lawyers,"Interpret laws, rulings and regulations for individuals and businesses.",1
+3775,Lawyers,"Analyze the probable outcomes of cases, using knowledge of legal precedents.",3
+3776,Lawyers,Present and summarize cases to judges and juries.,0
+3777,Lawyers,Evaluate findings and develop strategies and arguments in preparation for presentation of cases.,3
+3778,Lawyers,Gather evidence to formulate defense or to initiate legal actions by such means as interviewing clients and witnesses to ascertain the facts of a case.,3
+3779,Lawyers,Represent clients in court or before government agencies.,3
+3780,Lawyers,Examine legal data to determine advisability of defending or prosecuting lawsuit.,3
+3781,Lawyers,"Select jurors, argue motions, meet with judges, and question witnesses during the course of a trial.",0
+3782,Lawyers,Present evidence to defend clients or prosecute defendants in criminal or civil litigation.,3
+3783,Lawyers,"Study Constitution, statutes, decisions, regulations, and ordinances of quasi-judicial bodies to determine ramifications for cases.",1
+3785,Lawyers,"Prepare legal briefs and opinions, and file appeals in state and federal courts of appeal.",3
+3786,Lawyers,Negotiate settlements of civil disputes.,0
+3787,Lawyers,Confer with colleagues with specialties in appropriate areas of legal issue to establish and verify bases for legal proceedings.,0
+3788,Lawyers,Search for and examine public and other legal records to write opinions or establish ownership.,2
+3789,Lawyers,Supervise legal assistants.,0
+3790,Lawyers,Perform administrative and management functions related to the practice of law.,0
+3791,Lawyers,"Act as agent, trustee, guardian, or executor for businesses or individuals.",0
+3792,Lawyers,Probate wills and represent and advise executors and administrators of estates.,0
+3793,Lawyers,"Help develop federal and state programs, draft and interpret laws and legislation, and establish enforcement procedures.",1
+5643,"Judges, Magistrate Judges, and Magistrates","Instruct juries on applicable laws, direct juries to deduce the facts from the evidence presented, and hear their verdicts.",0
+5644,"Judges, Magistrate Judges, and Magistrates","Sentence defendants in criminal cases, on conviction by jury, according to applicable government statutes.",0
+5645,"Judges, Magistrate Judges, and Magistrates",Rule on admissibility of evidence and methods of conducting testimony.,3
+5646,"Judges, Magistrate Judges, and Magistrates",Preside over hearings and listen to allegations made by plaintiffs to determine whether the evidence supports the charges.,1
+5647,"Judges, Magistrate Judges, and Magistrates",Read documents on pleadings and motions to ascertain facts and issues.,0
+5648,"Judges, Magistrate Judges, and Magistrates",Interpret and enforce rules of procedure or establish new rules in situations where there are no procedures already established by law.,1
+5649,"Judges, Magistrate Judges, and Magistrates",Monitor proceedings to ensure that all applicable rules and procedures are followed.,0
+5650,"Judges, Magistrate Judges, and Magistrates","Advise attorneys, juries, litigants, and court personnel regarding conduct, issues, and proceedings.",0
+5651,"Judges, Magistrate Judges, and Magistrates",Research legal issues and write opinions on the issues.,1
+5652,"Judges, Magistrate Judges, and Magistrates","Conduct preliminary hearings to decide issues, such as whether there is reasonable and probable cause to hold defendants in felony cases.",1
+5653,"Judges, Magistrate Judges, and Magistrates",Write decisions on cases.,1
+5654,"Judges, Magistrate Judges, and Magistrates",Award compensation for damages to litigants in civil cases in relation to findings by juries or by the court.,0
+5655,"Judges, Magistrate Judges, and Magistrates",Settle disputes between opposing attorneys.,0
+5656,"Judges, Magistrate Judges, and Magistrates","Supervise other judges, court officers, and the court's administrative staff.",0
+5657,"Judges, Magistrate Judges, and Magistrates",Impose restrictions upon parties in civil cases until trials can be held.,0
+5658,"Judges, Magistrate Judges, and Magistrates","Rule on custody and access disputes, and enforce court orders regarding custody and support of children.",0
+5659,"Judges, Magistrate Judges, and Magistrates",Grant divorces and divide assets between spouses.,0
+5660,"Judges, Magistrate Judges, and Magistrates",Participate in judicial tribunals to help resolve disputes.,0
+5661,"Judges, Magistrate Judges, and Magistrates",Perform wedding ceremonies.,0
+7617,"Administrative Law Judges, Adjudicators, and Hearing Officers",Prepare written opinions and decisions.,1
+7618,"Administrative Law Judges, Adjudicators, and Hearing Officers","Review and evaluate data on documents, such as claim applications, birth or death certificates, or physician or employer records.",2
+7619,"Administrative Law Judges, Adjudicators, and Hearing Officers","Research and analyze laws, regulations, policies, and precedent decisions to prepare for hearings and to determine conclusions.",1
+7620,"Administrative Law Judges, Adjudicators, and Hearing Officers",Confer with individuals or organizations involved in cases to obtain relevant information.,3
+7621,"Administrative Law Judges, Adjudicators, and Hearing Officers","Recommend the acceptance or rejection of claims or compromise settlements according to laws, regulations, policies, and precedent decisions.",0
+7622,"Administrative Law Judges, Adjudicators, and Hearing Officers",Explain to claimants how they can appeal rulings that go against them.,3
+7623,"Administrative Law Judges, Adjudicators, and Hearing Officers",Monitor and direct the activities of trials and hearings to ensure that they are conducted fairly and that courts administer justice while safeguarding the legal rights of all involved parties.,0
+7624,"Administrative Law Judges, Adjudicators, and Hearing Officers",Authorize payment of valid claims and determine method of payment.,0
+7625,"Administrative Law Judges, Adjudicators, and Hearing Officers","Conduct hearings to review and decide claims regarding issues, such as social program eligibility, environmental protection, or enforcement of health and safety regulations.",1
+7626,"Administrative Law Judges, Adjudicators, and Hearing Officers","Rule on exceptions, motions, and admissibility of evidence.",3
+7627,"Administrative Law Judges, Adjudicators, and Hearing Officers","Determine existence and amount of liability according to current laws, administrative and judicial precedents, and available evidence.",3
+7628,"Administrative Law Judges, Adjudicators, and Hearing Officers",Issue subpoenas and administer oaths in preparation for formal hearings.,1
+7629,"Administrative Law Judges, Adjudicators, and Hearing Officers",Conduct studies of appeals procedures in field agencies to ensure adherence to legal requirements and to facilitate determination of cases.,3
+9230,"Title Examiners, Abstractors, and Searchers",Prepare lists of all legal instruments applying to a specific piece of land and the buildings on it.,2
+9231,"Title Examiners, Abstractors, and Searchers","Examine documentation such as mortgages, liens, judgments, easements, plat books, maps, contracts, and agreements to verify factors such as properties' legal descriptions, ownership, or restrictions.",2
+9232,"Title Examiners, Abstractors, and Searchers",Read search requests to ascertain types of title evidence required and to obtain descriptions of properties and names of involved parties.,2
+9233,"Title Examiners, Abstractors, and Searchers","Copy or summarize recorded documents, such as mortgages, trust deeds, and contracts, that affect property titles.",2
+9234,"Title Examiners, Abstractors, and Searchers","Examine individual titles to determine if restrictions, such as delinquent taxes, will affect titles and limit property use.",2
+9235,"Title Examiners, Abstractors, and Searchers",Prepare reports describing any title encumbrances encountered during searching activities and outlining actions needed to clear titles.,2
+9236,"Title Examiners, Abstractors, and Searchers","Verify accuracy and completeness of land-related documents accepted for registration, preparing rejection notices when documents are not acceptable.",2
+9237,"Title Examiners, Abstractors, and Searchers","Confer with realtors, lending institution personnel, buyers, sellers, contractors, surveyors, and courthouse personnel to exchange title-related information or to resolve problems.",2
+9238,"Title Examiners, Abstractors, and Searchers",Enter into record-keeping systems appropriate data needed to create new title records or to update existing ones.,2
+9239,"Title Examiners, Abstractors, and Searchers","Direct activities of workers who search records and examine titles, assigning, scheduling, and evaluating work, and providing technical guidance as necessary.",2
+9240,"Title Examiners, Abstractors, and Searchers","Obtain maps or drawings delineating properties from company title plants, county surveyors, or assessors' offices.",2
+9241,"Title Examiners, Abstractors, and Searchers","Prepare and issue title commitments and title insurance policies, based on information compiled from title searches.",2
+9242,"Title Examiners, Abstractors, and Searchers","Summarize pertinent legal or insurance details, or sections of statutes or case law from reference books for use in examinations or as proofs or ready reference.",1
+9243,"Title Examiners, Abstractors, and Searchers",Retrieve and examine real estate closing files for accuracy and to ensure that information included is recorded and executed according to regulations.,2
+9245,"Title Examiners, Abstractors, and Searchers","Determine whether land-related documents can be registered under the relevant legislation, such as the Land Titles Act.",2
+9246,"Title Examiners, Abstractors, and Searchers",Assess fees related to registration of property-related documents.,2
+12993,"Arbitrators, Mediators, and Conciliators","Confer with disputants to clarify issues, identify underlying concerns, and develop an understanding of their respective needs and interests.",0
+12994,"Arbitrators, Mediators, and Conciliators","Use mediation techniques to facilitate communication between disputants, to further parties' understanding of different perspectives, and to guide parties toward mutual agreement.",0
+12995,"Arbitrators, Mediators, and Conciliators",Set up appointments for parties to meet for mediation.,0
+12996,"Arbitrators, Mediators, and Conciliators",Prepare settlement agreements for disputants to sign.,0
+12997,"Arbitrators, Mediators, and Conciliators","Organize or deliver public presentations about mediation to organizations, such as community agencies or schools.",0
+12999,"Arbitrators, Mediators, and Conciliators",Prepare written opinions or decisions regarding cases.,1
+13001,"Arbitrators, Mediators, and Conciliators","Rule on exceptions, motions, or admissibility of evidence.",3
+13003,"Arbitrators, Mediators, and Conciliators","Evaluate information from documents, such as claim applications, birth or death certificates, or physician or employer records.",2
+13004,"Arbitrators, Mediators, and Conciliators","Interview claimants, agents, or witnesses to obtain information about disputed issues.",3
+13005,"Arbitrators, Mediators, and Conciliators","Research laws, regulations, policies, or precedent decisions to prepare for hearings.",1
+13007,"Arbitrators, Mediators, and Conciliators",Recommend acceptance or rejection of compromise settlement offers.,0
+13008,"Arbitrators, Mediators, and Conciliators","Conduct initial meetings with disputants to outline the arbitration process, settle procedural matters, such as fees, or determine details, such as witness numbers or time requirements.",0
+13009,"Arbitrators, Mediators, and Conciliators",Participate in court proceedings.,0
+13010,"Arbitrators, Mediators, and Conciliators",Issue subpoenas or administer oaths to prepare for formal hearings.,1
+13011,"Arbitrators, Mediators, and Conciliators",Authorize payment of valid claims.,0
+13012,"Arbitrators, Mediators, and Conciliators",Conduct studies of appeals procedures to ensure adherence to legal requirements or to facilitate disposition of cases.,3
+18491,Paralegals and Legal Assistants,"Prepare affidavits or other documents, such as legal correspondence, and organize and maintain documents in paper or electronic filing system.",2
+18492,Paralegals and Legal Assistants,Prepare for trial by performing tasks such as organizing exhibits.,0
+18493,Paralegals and Legal Assistants,Meet with clients and other professionals to discuss details of cases.,3
+18494,Paralegals and Legal Assistants,File pleadings with court clerks.,0
+18496,Paralegals and Legal Assistants,"Arbitrate disputes between parties and assist in the real estate closing process, such as by reviewing title searches.",2
+19044,Judicial Law Clerks,Attend court sessions to hear oral arguments or record necessary case information.,0
+19045,Judicial Law Clerks,Communicate with counsel regarding case management or procedural requirements.,3
+19046,Judicial Law Clerks,"Confer with judges concerning legal questions, construction of documents, or granting of orders.",0
+19047,Judicial Law Clerks,"Draft or proofread judicial opinions, decisions, or citations.",1
+19048,Judicial Law Clerks,Keep abreast of changes in the law and inform judges when cases are affected by such changes.,0
+19049,Judicial Law Clerks,Participate in conferences or discussions between trial attorneys and judges.,0
+19050,Judicial Law Clerks,"Prepare briefs, legal memoranda, or statements of issues involved in cases, including appropriate suggestions or recommendations.",3
+19051,Judicial Law Clerks,"Research laws, court decisions, documents, opinions, briefs, or other information related to cases before the court.",1
+19052,Judicial Law Clerks,"Review complaints, petitions, motions, or pleadings that have been filed to determine issues involved or basis for relief.",0
+19053,Judicial Law Clerks,Review dockets of pending litigation to ensure adequate progress.,0
+19054,Judicial Law Clerks,"Verify that all files, complaints, or other papers are available and in the proper order.",2
+19056,Judicial Law Clerks,Coordinate judges' meeting and appointment schedules.,0
+19057,Judicial Law Clerks,"Enter information into computerized court calendar, filing, or case management systems.",0
+19058,Judicial Law Clerks,Maintain judges' law libraries by assembling or updating appropriate documents.,0
+19059,Judicial Law Clerks,"Perform courtroom duties, including calling calendars, administering oaths, and swearing in jury panels and witnesses.",0
+19060,Judicial Law Clerks,"Prepare periodic reports on court proceedings, as required.",0
+19061,Judicial Law Clerks,Respond to questions from judicial officers or court staff on general legal issues.,0
+19062,Judicial Law Clerks,"Supervise law students, volunteers, or other personnel assigned to the court.",0
+19807,"Arbitrators, Mediators, and Conciliators",Specialize in the negotiation and resolution of environmental conflicts involving issues such as natural resource allocation or regional development planning.,0
+20057,"Judges, Magistrate Judges, and Magistrates",Provide information regarding the judicial system or other legal issues through the media and public speeches.,1
+20238,"Arbitrators, Mediators, and Conciliators","Apply relevant laws, regulations, policies, or precedents to reach conclusions.",1
+20239,"Arbitrators, Mediators, and Conciliators",Conduct hearings to obtain information or evidence relative to disposition of claims.,1
+20240,"Arbitrators, Mediators, and Conciliators","Determine extent of liability according to evidence, laws, or administrative or judicial precedents.",3
+20877,Lawyers,"Prepare, draft, and review legal documents, such as wills, deeds, patent applications, mortgages, leases, and contracts.",2
+21062,Paralegals and Legal Assistants,"Investigate facts and law of cases and search pertinent sources, such as public records and internet sources, to determine causes of action and to prepare cases.",1
+21181,"Administrative Law Judges, Adjudicators, and Hearing Officers",Schedule hearings.,1
+21182,"Judges, Magistrate Judges, and Magistrates",Issue arrest warrants.,1
+23992,Lawyers,Negotiate contractual agreements.,0
+23994,Paralegals and Legal Assistants,"Prepare, edit, or review legal documents, including legislation, briefs, pleadings, appeals, wills, contracts, and real estate closing statements.",2

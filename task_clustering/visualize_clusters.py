@@ -72,7 +72,7 @@ def main(tasks=None, labels=CLUSTER_LABELS, out_dir=OUTPUT_DIR, seed=SEED):
     out = out_dir / "figures"
     out.mkdir(parents=True, exist_ok=True)
     for name, data, title in figures:
-        plot(data, title, labels).write_html(out / f"{name}.html")
+        plot(data, title, labels).write_html(out / f"{name}.html", include_plotlyjs="cdn")
         print(f"Saved {out / name}.html")
 
 
